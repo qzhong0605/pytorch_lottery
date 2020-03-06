@@ -5,6 +5,26 @@ functions on model
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+import hook
+
+__atomic_model__ = [
+    nn.Conv1d, nn.Conv2d, nn.Conv3d,   # convolution module
+    nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d, # transpose convolution module
+    nn.ReLU, nn.RReLU, nn.ReLU6, nn.LeakyReLU, nn.Sigmoid, # activation module
+    nn.AvgPool1d, nn.AvgPool2d, nn.AvgPool3d, # average pool module
+    nn.MaxPool1d, nn.MaxPool2d, nn.MaxPool3d, # max pool module
+    nn.AdaptiveAvgPool1d, nn.AdaptiveAvgPool2d, nn.AdaptiveAvgPool3d, # adaptive average pool module
+    nn.AdaptiveMaxPool1d, nn.AdaptiveMaxPool2d, nn.AdaptiveMaxPool3d, # adaptive max pool module
+    nn.Linear, # fully-connected module
+    nn.LogSoftmax, # classifier module
+]
+
+def is_atomic_module(module):
+    for __module__ in __atomic_model__:
+        if isinstance(module, __module__):
+            return True
+    return False
+
 
 class HookModule(nn.Module):
     def __init__(self):
@@ -21,7 +41,7 @@ class HookModule(nn.Module):
         """
         _forward_hooks = OrderedDict()
         for module in self.modules():
-            if isinstance(module, nn.Sequential):
+            if not is_atomic_module(module):
                 continue
             # current module is an atomic module
             handler = module.register_forward_hook(global_forward_fn)
@@ -35,10 +55,7 @@ class HookModule(nn.Module):
         Args:
             forward_hook: a map from module to hook hander id
         """
-        for module in self.modules():
-            if isinstance(module, nn.Sequential):
-                continue
-            handler_id = forward_hook[module]
+        for module, handler_id in forward_hook.items():
             module._forward_hooks.pop(handler_id)
 
 
@@ -50,7 +67,7 @@ class HookModule(nn.Module):
         """
         _backward_hooks = OrderedDict()
         for module in self.modules():
-            if isinstance(module, nn.Sequential):
+            if not is_atomic_module(module):
                 continue
             handler = module.register_backward_hook(global_backward_fn)
             _backward_hooks.update({module : handler.id})
@@ -63,10 +80,7 @@ class HookModule(nn.Module):
         Args:
             backward_hook: an ordered dict, mapping from module to handler id
         """
-        for module in self.modules():
-            if isinstance(module, nn.Sequential):
-                continue
-            handler_id = backward_hook[module]
+        for module, handler_id in backward_hook.items():
             module._backward_hooks.pop(handler_id)
 
 
@@ -77,4 +91,6 @@ class HookModule(nn.Module):
             input: a tuple or list, indicating the input shape
         """
         input_tensor = torch.rand(input)
+        forward_hooks = self._register_forward_hook(hook.module_features)
         self.__call__(input_tensor)
+        self._unregister_forward_hook(forward_hooks)
