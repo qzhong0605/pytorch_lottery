@@ -3,7 +3,9 @@ from torch.nn.modules import Module
 import torch.nn as nn
 import torch.nn.functional as F
 
-class LeNet(Module):
+from models import base_model
+
+class LeNet(base_model.HookModule):
     def __init__(self, num_classes=10):
         super(LeNet, self).__init__()
         self.features = nn.Sequential(

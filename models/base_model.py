@@ -27,8 +27,9 @@ def is_atomic_module(module):
 
 
 class HookModule(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(HookModule, self).__init__()
+        self._device = device
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -91,6 +92,7 @@ class HookModule(nn.Module):
             input: a tuple or list, indicating the input shape
         """
         input_tensor = torch.rand(input)
+        input_tensor = input_tensor.to(self._device)
         forward_hooks = self._register_forward_hook(hook.module_features)
         self.__call__(input_tensor)
         self._unregister_forward_hook(forward_hooks)
