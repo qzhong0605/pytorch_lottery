@@ -155,7 +155,7 @@ def main(args):
         checkpoint = torch.load(f'{args.checkpoint_model}')
         model.load_state_dict(checkpoint['weights'])
         start_epoch = checkpoint['epoch']
-        print(f"restart epoch {start_epoch} and last accuracy {checkpoint['acc']}")
+        print(f"restart epoch {start_epoch} and last accuracy {checkpoint['acc']}%")
 
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
