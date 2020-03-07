@@ -16,6 +16,8 @@ class LeNet(base_model.HookModule):
             nn.MaxPool2d(kernel_size=1, stride=2),
         )
 
+        self.flatten = nn.Flatten(start_dim=1)
+
         self.classifier = nn.Sequential(
             nn.Linear(64*14*14, 256),
             nn.ReLU(inplace=True),
@@ -25,10 +27,10 @@ class LeNet(base_model.HookModule):
         )
 
     def forward(self, x):
-        x = self.features(x)
-        x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        output = F.log_softmax(x)
+        out = self.features(x)
+        out = self.flatten(out)
+        out = self.classifier(out)
+        output = F.log_softmax(out)
         return output
 
 def build_lenet(device):
