@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class FC(nn.Module):
-    def __init__(self):
-        super(FC, self).__init__()
+    def __init__(self, device):
+        super(FC, self).__init__(device)
         self.fc1 = nn.Linear(28*28, 300)
         self.fc2 = nn.Linear(300, 100)
         self.fc3 = nn.Linear(100, 10)
@@ -23,5 +23,5 @@ class FC(nn.Module):
         return output
 
 
-def build_fc():
-    return FC()
+def build_fc(device):
+    return FC(device).to(device)

@@ -86,7 +86,7 @@ def test(args, model, device, test_loader, epoch):
 
 def get_target_model(dataset_name, model_name, device):
     model_class = model_list.__model__[dataset_name][model_name]
-    return model_class().to(device)
+    return model_class(device)
 
 
 def main(args):
@@ -146,6 +146,10 @@ def main(args):
     if args.verbose:
         utils.show_details_of_model(model)
 
+    # show the approciate details of network features
+    if args.features:
+        model.dump_tensor_shape((1,1,28,28))
+
     start_epoch = 0
     # resume from the previous saved checkpoint
     if args.resume:
@@ -188,6 +192,8 @@ def init_args():
                         'such as mnist_convnet')
     parser.add_argument('--verbose', action='store_true', default=False,
                         help='print the details of the model, including weights and shapes')
+    parser.add_argument('--features', action='store_true', default=False,
+                        help='dump the details for network feature')
     parser.add_argument('--resume', action='store_true', default=False,
                         help='resume from a last saved checkpoint')
     parser.add_argument('--checkpoint-model', type=str,

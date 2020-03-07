@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from models import base_model
 
 class LeNet(base_model.HookModule):
-    def __init__(self, num_classes=10):
-        super(LeNet, self).__init__()
+    def __init__(self, device, num_classes=10):
+        super(LeNet, self).__init__(device)
         self.features = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
@@ -31,5 +31,5 @@ class LeNet(base_model.HookModule):
         output = F.log_softmax(x)
         return output
 
-def build_lenet():
-    return LeNet()
+def build_lenet(device):
+    return LeNet(device).to(device)
