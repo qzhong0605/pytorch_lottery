@@ -29,4 +29,9 @@ def module_debug(module, input, output):
     """
     from utils import show_details_of_module
     from utils import get_weight_of_module
+    from utils import min_weight_of_module
+    from utils import max_weight_of_module
+    from utils import mean_weight_of_module
+    from utils import median_weight_of_module
+
     import module_ipdb; module_ipdb.set_trace()

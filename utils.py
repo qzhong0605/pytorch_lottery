@@ -18,6 +18,34 @@ def get_weight_of_module(module, key):
     return module._parameters[key]
 
 
+def min_weight_of_module(module, key):
+    r"""
+    retrieve the minimum value of the weight
+    """
+    return module._parameters[key].min()
+
+
+def max_weight_of_module(module, key):
+    r"""
+    retrieve the maximum value of the weight
+    """
+    return module._parameters[key].max()
+
+
+def mean_weight_of_module(module, key):
+    r"""
+    retrieve the mean value of the weight
+    """
+    return module._parameters[key].mean()
+
+
+def median_weight_of_module(module, key):
+    r"""
+    retrieve the median value of the weight
+    """
+    return module._parameters[key].median()
+
+
 def show_sparsity_of_model(model):
     """ It's used to display the sparsity of the network, including the weight shape
     and number of non-zero weights
@@ -41,4 +69,3 @@ def resume_from_checkpoint(model, checkpoint):
     import os
     if not os.path.exists(checkpoint):
         return
-
