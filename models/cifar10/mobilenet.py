@@ -39,8 +39,12 @@ class MobileNet(base_model.HookModule):
             nn.ReLU()
         )
         self.layers = self._make_layers(in_planes=32)
-        self.avgpool2d = nn.AvgPool2d(kernel_size=2)
-        self.linear = nn.Linear(1024, num_classes)
+
+        self.classifier = nn.Sequential(
+            nn.AvgPool2d(kernel_size=2),
+            nn.Flatten(start_dim=1),
+            nn.Linear(1024, num_classes)
+        )
 
     def _make_layers(self, in_planes):
         layers = []
@@ -54,10 +58,7 @@ class MobileNet(base_model.HookModule):
     def forward(self, x):
         out = self.preprocess(x)
         out = self.layers(out)
-        out = self.avgpool2d(out)
-
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
+        out = self.classifier(out)
         return F.log_softmax(out)
 
 def build_mobilenet(device):

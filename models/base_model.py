@@ -17,6 +17,7 @@ __atomic_model__ = [
     nn.AdaptiveMaxPool1d, nn.AdaptiveMaxPool2d, nn.AdaptiveMaxPool3d, # adaptive max pool module
     nn.Linear, # fully-connected module
     nn.LogSoftmax, # classifier module
+    nn.Flatten,  # flatten module
 ]
 
 def is_atomic_module(module):
