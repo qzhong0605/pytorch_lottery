@@ -32,6 +32,8 @@ class HookModule(nn.Module):
     def __init__(self, device):
         super(HookModule, self).__init__()
         self._device = device
+        self._forward_trace_ids = OrderedDict()   # track the forward  pass
+        self._backward_trace_ids = OrderedDict()  # track the backward pass
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -51,18 +53,40 @@ class HookModule(nn.Module):
             _forward_hooks.update({module : handler.id})
         return _forward_hooks
 
+    def _register_preforward_hook(self, global_forward_fn=None):
+        """ register an global_backward_fn on all the basic module of the network
+
+        Return:
+            a directory: map the module to all the handler id
+        """
+        _pre_forward_hooks = OrderedDict()
+        for module in self.modules():
+            if not is_atomic_module(module):
+                continue
+            # current module is an atomic module
+            handler = module.register_forward_pre_hook(global_forward_fn)
+            _pre_forward_hooks.update({module : handler.id})
+        return _pre_forward_hooks
 
     def _unregister_forward_hook(self, forward_hook):
         """ unregister forward hooks for current module
 
         Args:
-            forward_hook: a map from module to hook hander id
+            forward_hook: a map from module to hook handler id
         """
         for module, handler_id in forward_hook.items():
             module._forward_hooks.pop(handler_id)
 
+    def _unregister_preforward_hook(self, pre_forward_hooks):
+        """ unregister preforward hooks for current module
 
-    def _register_backward_book(self, global_backward_fn=None):
+        Args:
+            pre_forward_hooks: a map from module to preforward hook handler id
+        """
+        for module, handler_id in pre_forward_hooks.items():
+            module._pre_forward_hooks.pip(handler_id)
+
+    def _register_backward_hook(self, global_backward_fn=None):
         """ register an backward hook, which would be performed on all the
         children modules of the current module after backward
 
@@ -76,8 +100,7 @@ class HookModule(nn.Module):
             _backward_hooks.update({module : handler.id})
         return _backward_hooks
 
-
-    def _unregister_backward_book(self, backward_hook):
+    def _unregister_backward_hook(self, backward_hook):
         """ unregister backward hooks for all the children modules of current module
 
         Args:
@@ -85,7 +108,6 @@ class HookModule(nn.Module):
         """
         for module, handler_id in backward_hook.items():
             module._backward_hooks.pop(handler_id)
-
 
     def dump_tensor_shape(self, input):
         """ It output the approciate tensor information for current model
@@ -98,3 +120,12 @@ class HookModule(nn.Module):
         forward_hooks = self._register_forward_hook(hook.module_features)
         self.__call__(input_tensor)
         self._unregister_forward_hook(forward_hooks)
+
+    def set_trace(self):
+        """ set trace on all atomic module. The traces are set after performing
+        forward pass on module
+        """
+        self._forward_trace_ids = self._register_forward_hook(hook.module_debug)
+
+    def clear_trace(self):
+        self._unregister_forward_hook(self._forward_trace_ids)

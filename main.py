@@ -151,6 +151,9 @@ def main(args):
         # the input format is NCHW
         model.dump_tensor_shape((1, args.channel, args.height, args.width))
 
+    if args.model_debug:
+        model.set_trace()
+
     start_epoch = 0
     # resume from the previous saved checkpoint
     if args.resume:
@@ -205,6 +208,8 @@ def init_args():
                         help='the width for input data(default mnist)')
     parser.add_argument('--checkpoint-model', type=str,
                         help='a checkpoint model saved on disk')
+    parser.add_argument('--model-debug', action='store_true', default=True,
+                        help='used to trace all the module')
 
     args = parser.parse_args()
     return args
