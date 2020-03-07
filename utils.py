@@ -1,13 +1,21 @@
 import torch
 
-def show_details_of_model(model):
-    """ It's used to display the details of the network, including the weights and
-    shapes
+def show_details_of_module(module):
+    """ It's used to display the details of the module, including the weights and
+    shapes,
+    Here, the module includes
     """
-    print('=========================== weight details of network ===============================')
-    for name, param in model.named_parameters():
+    print('=========================== weight details of module ===============================')
+    for name, param in module.named_parameters():
         print(f'{name}: \t {param.shape}')
     print('=====================================================================================')
+
+
+def get_weight_of_module(module, key):
+    r"""
+    get the specified weight with `key` name
+    """
+    return module._parameters([key])
 
 
 def show_sparsity_of_model(model):

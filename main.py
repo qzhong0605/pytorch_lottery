@@ -144,7 +144,7 @@ def main(args):
     model = get_target_model(dataset, model_name, device)
     # show the weight details for model
     if args.verbose:
-        utils.show_details_of_model(model)
+        utils.show_details_of_module(model)
 
     # show the approciate details of network features
     if args.features:

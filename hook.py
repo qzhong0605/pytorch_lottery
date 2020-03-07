@@ -27,4 +27,6 @@ def module_features(module, input, output):
 def module_debug(module, input, output):
     r""" It's used to trace and debug all the atomic module of the network
     """
+    from utils import show_details_of_module
+    from utils import get_weight_of_module
     import module_ipdb; module_ipdb.set_trace()
