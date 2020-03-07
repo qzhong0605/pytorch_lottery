@@ -148,7 +148,8 @@ def main(args):
 
     # show the approciate details of network features
     if args.features:
-        model.dump_tensor_shape((1,1,28,28))
+        # the input format is NCHW
+        model.dump_tensor_shape((1, args.channel, args.height, args.width))
 
     start_epoch = 0
     # resume from the previous saved checkpoint
@@ -196,6 +197,12 @@ def init_args():
                         help='dump the details for network feature')
     parser.add_argument('--resume', action='store_true', default=False,
                         help='resume from a last saved checkpoint')
+    parser.add_argument('--channel', type=int, default=1,
+                        help='the channel for input data')
+    parser.add_argument('--height', type=int, default=28,
+                        help='the height for input data(default mnist)')
+    parser.add_argument('--width', type=int, default=28,
+                        help='the width for input data(default mnist)')
     parser.add_argument('--checkpoint-model', type=str,
                         help='a checkpoint model saved on disk')
 
