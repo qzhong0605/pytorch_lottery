@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from models import base_model
 
-class FC(nn.Module):
+class FC(base_model.HookModule):
     def __init__(self, device):
         super(FC, self).__init__(device)
         self.fc1 = nn.Linear(28*28, 300)
