@@ -15,7 +15,7 @@ def module_features(module, input, output):
     """
     assert isinstance(module, nn.Module), f'module must be type of nn.Module'
 
-    print(f"======================= Module ================================")
+    print(f"==================== Module({type(module).__name__}) ==========================")
     for __input__ in input:
         print(f'\tinput tensor: {__input__.shape}')
 

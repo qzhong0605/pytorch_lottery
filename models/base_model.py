@@ -18,6 +18,7 @@ __atomic_model__ = [
     nn.Linear, # fully-connected module
     nn.LogSoftmax, # classifier module
     nn.Flatten,  # flatten module
+    nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, # batch normalization module
 ]
 
 def is_atomic_module(module):
