@@ -15,7 +15,7 @@ def get_weight_of_module(module, key):
     r"""
     get the specified weight with `key` name
     """
-    return module._parameters([key])
+    return module._parameters[key]
 
 
 def show_sparsity_of_model(model):
