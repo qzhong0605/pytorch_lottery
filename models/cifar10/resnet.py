@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models import base_model
+from lottery_modules import elements
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -23,11 +24,12 @@ class BasicBlock(nn.Module):
                 nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(self.expansion*planes)
             )
+        self.elements_sum = elements.Sum()
         self.branch_out = nn.ReLU()
 
     def forward(self, x):
         out = self.branch(x)
-        out += self.short_cut(x)
+        out = self.elements_sum((out, self.short_cut(x)))
         out = self.branch_out(out)
         return out
 
@@ -41,7 +43,7 @@ class BottleNeck(nn.Module):
             nn.Conv2d(in_planes, planes, kernel_size=1, bias=False),
             nn.BatchNorm2d(planes),
             nn.ReLU(),
-            nn.Conv2d(planes, planes, kernel_size=3, stride=strde, padding=1, bias=False),
+            nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False),
             nn.BatchNorm2d(planes),
             nn.ReLU(),
             nn.Conv2d(planes, self.expansion*planes, kernel_size=1, bias=False),
@@ -54,11 +56,12 @@ class BottleNeck(nn.Module):
                 nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, bias=False),
                 nn.BatchNorm2d(self.expansion*planes)
             )
+        self.elements_sum = elements.Sum()
         self.branch_out = nn.ReLU()
 
     def forward(self, x):
         out = self.branch(x)
-        out += self.short_cut(x)
+        out = self.elements_sum((out, self.short_cut(x)))
         out = self.branch_out(out)
         return out
 
@@ -80,6 +83,7 @@ class ResNet(base_model.HookModule):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         self.avgpool2d = nn.AvgPool2d(kernel_size=4, stride=1)
+        self.flatten = nn.Flatten(start_dim=1)
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
 
@@ -99,7 +103,7 @@ class ResNet(base_model.HookModule):
         out = self.layer4(out)
 
         out = self.avgpool2d(out)
-        out = out.view(out.size(0), -1)
+        out = self.flatten(out)
         out = self.linear(out)
 
         out = F.log_softmax(out)
