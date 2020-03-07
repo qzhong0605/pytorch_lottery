@@ -129,3 +129,16 @@ class HookModule(nn.Module):
 
     def clear_trace(self):
         self._unregister_forward_hook(self._forward_trace_ids)
+
+    def trace_module(self, module_type):
+        """ set trace on the specified module
+
+        Args:
+            module_type: a string representing module type
+        """
+        for module in self.modules():
+            if not is_atomic_module(module):
+                continue
+            if type(module).__name__ == module_type:
+                handler = module.register_forward_hook(hook.module_debug)
+                self._forward_trace_ids.update({module : handler.id})

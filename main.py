@@ -153,6 +153,8 @@ def main(args):
 
     if args.model_debug:
         model.set_trace()
+    elif args.module_debug:
+        model.trace_module(args.module)
 
     start_epoch = 0
     # resume from the previous saved checkpoint
@@ -208,8 +210,12 @@ def init_args():
                         help='the width for input data(default mnist)')
     parser.add_argument('--checkpoint-model', type=str,
                         help='a checkpoint model saved on disk')
-    parser.add_argument('--model-debug', action='store_true', default=True,
+    parser.add_argument('--model-debug', action='store_true', default=False,
                         help='used to trace all the module')
+    parser.add_argument('--module-debug', action='store_true', default=False,
+                        help='used to trace a specified type of module')
+    parser.add_argument('--module', type=str,
+                        help='the target module type name')
 
     args = parser.parse_args()
     return args
