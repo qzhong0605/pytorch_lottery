@@ -8,13 +8,13 @@ _USAGE = r"""
 useful commands:
     show_details_of_module: display the weights information for current module
     get_weight_of_module: return weight tensor with name for current module
-    min_weight_of_module: return min value for weight on current module
-    max_weight_of_module: return max value for weight on current module
-    mean_weight_of_module: return mean value for weight on current module
-    median_weight_of_module: return median value for weight on current module
+    min_weight_of_module: return min value of weight for current module
+    max_weight_of_module: return max value of weight for current module
+    mean_weight_of_module: return mean value of weight for current module
+    median_weight_of_module: return median value of weight for current module
 """
 def module_help():
-    print(r'{_USAGE}')
+    print(_USAGE)
 
 
 def module_features(module, input, output):
