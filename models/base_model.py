@@ -113,6 +113,20 @@ class HookModule(nn.Module):
         forward pass on module
         """
         self._forward_trace_ids = self._register_forward_hook(hook.module_debug)
+        def cleanup_running_modules(module, input, output):
+            self._session.clear_running_modules()
+        self.register_forward_hook(cleanup_running_modules)
+
+        def register_active_module(module, input, output):
+            r"""
+            register an active module into current session
+            """
+            self._session.add_module(module, input, output)
+        for module in self.modules():
+            if not checker.is_atomic_module(module):
+                continue
+            # register active module
+            module.register_forward_hook(register_active_module)
 
     def clear_trace(self):
         self._unregister_forward_hook(self._forward_trace_ids)

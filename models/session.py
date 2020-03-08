@@ -43,6 +43,12 @@ class Session(object):
             return None
         return self._running_modules[idx]
 
+    def last_module(self):
+        r"""
+        Return the lastest running module
+        """
+        return self.index_module(len(self._running_modules) - 1)
+
     def number_of_running_modules(self):
         return len(self._running_modules)
 

@@ -54,8 +54,11 @@ def median_weight_of_module(module, key):
 
 
 def list_sessions():
-    for session_id, session in enumerate(manager.DebugSessions.list_sessions()):
-        print(f"""{session_id}: {session}""")
+    for session_id, _ in enumerate(manager.DebugSessions.list_sessions()):
+        session = manager.DebugSessions.retrieve_session(session_id)
+        last_module = session.last_module()
+        last_idx = session.number_of_running_modules()
+        print(f"""{session_id}: {session.get_session_name()} [module {last_idx-1}: {last_module[0]}]""")
 
 
 def backtrace_modules(session_id):
