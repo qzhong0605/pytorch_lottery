@@ -7,13 +7,14 @@ import torch.nn as nn
 _USAGE = r"""
 useful commands:
     show_details_of_module: display the weights information for current module
-    get_weight_of_module: return weight tensor with name for current module
-    min_weight_of_module: return min value of weight for current module
-    max_weight_of_module: return max value of weight for current module
-    mean_weight_of_module: return mean value of weight for current module
-    median_weight_of_module: return median value of weight for current module
+    get_weight_of_module: return weight tensor with name for a submodule
+    min_weight_of_module: return min value of weight for a submodule
+    max_weight_of_module: return max value of weight for a submodule
+    mean_weight_of_module: return mean value of weight for a submodule
+    median_weight_of_module: return median value of weight for a submodule
     list_sessions: display all the running network
     backtrace_modules: display the modules has performed
+    retrieve_module: retrieve a submodule with session id and submodule id
 """
 def module_help():
     print(_USAGE)
@@ -50,5 +51,6 @@ def module_debug(module, input, output):
     from utils import median_weight_of_module
     from utils import list_sessions
     from utils import backtrace_modules
+    from utils import retrieve_module
 
     import module_ipdb; module_ipdb.set_trace()

@@ -68,7 +68,7 @@ def backtrace_modules(session_id):
         running_module = session.index_module(idx)
         print(f"""module {idx}: {running_module[0]}""")
         if type(running_module[1][0]) == tuple:
-            input_tensor = 'Input:'
+            input_tensor = '\tInput:'
             for __input__ in running_module[1][0]:
                 input_tensor += f'\t{__input__.shape}, {__input__.device.type}'
             print(f'{input_tensor}')
@@ -79,7 +79,7 @@ def backtrace_modules(session_id):
 
 
 def retrieve_module(session_id, module_id):
-    session = manager.DebugSessions.register_session(session_id)
+    session = manager.DebugSessions.retrieve_session(session_id)
     running_module = session.index_module(module_id)
     return running_module
 
