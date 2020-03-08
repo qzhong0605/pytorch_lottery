@@ -20,35 +20,35 @@ def show_details_of_module(module):
 
 def get_weight_of_module(module, key):
     r"""
-    get the specified weight with `key` name
+    get the specified weight with `key` name for a submodule
     """
     return module._parameters[key]
 
 
 def min_weight_of_module(module, key):
     r"""
-    retrieve the minimum value of the weight
+    retrieve the minimum value of the weight for a submodule
     """
     return module._parameters[key].min()
 
 
 def max_weight_of_module(module, key):
     r"""
-    retrieve the maximum value of the weight
+    retrieve the maximum value of the weight for a submodule
     """
     return module._parameters[key].max()
 
 
 def mean_weight_of_module(module, key):
     r"""
-    retrieve the mean value of the weight
+    retrieve the mean value of the weight for a submodule
     """
     return module._parameters[key].mean()
 
 
 def median_weight_of_module(module, key):
     r"""
-    retrieve the median value of the weight
+    retrieve the median value of the weight for a submodule
     """
     return module._parameters[key].median()
 
@@ -67,8 +67,15 @@ def backtrace_modules(session_id):
     for idx in range(session.number_of_running_modules()):
         running_module = session.index_module(idx)
         print(f"""module {idx}: {running_module[0]}""")
-        print(f"""\tInput: {running_module[1][0].shape}""")
-        print(f"""\tOutput: {running_module[2][0].shape}""")
+        if type(running_module[1][0]) == tuple:
+            input_tensor = 'Input:'
+            for __input__ in running_module[1][0]:
+                input_tensor += f'\t{__input__.shape}, {__input__.device.type}'
+            print(f'{input_tensor}')
+        else:
+            print(f"""\tInput: {running_module[1][0].shape}, {running_module[1][0].device.type}""")
+
+        print(f"""\tOutput:\t{running_module[2][0].shape}, {running_module[2][0].device.type}""")
 
 
 def retrieve_module(session_id, module_id):

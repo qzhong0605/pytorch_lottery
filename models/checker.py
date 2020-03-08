@@ -1,4 +1,5 @@
 import torch.nn as nn
+from lottery_modules import elements
 
 __atomic_model__ = [
     nn.Conv1d, nn.Conv2d, nn.Conv3d,   # convolution module
@@ -12,6 +13,8 @@ __atomic_model__ = [
     nn.LogSoftmax, # classifier module
     nn.Flatten,  # flatten module
     nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, # batch normalization module
+    elements.Sum,  # element-wise sum module
+    elements.Abs,  # element-wise abs module
 ]
 
 def is_atomic_module(module):
