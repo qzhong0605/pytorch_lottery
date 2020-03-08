@@ -1,14 +1,20 @@
 import torch
 
+################################################################################
+#
+# debug-related functions
+#
+################################################################################
 def show_details_of_module(module):
     """ It's used to display the details of the module, including the weights and
     shapes,
     Here, the module includes
     """
-    print('=========================== weight details of module ===============================')
+    module_name = type(module).__name__
+    print(r'====================== weight of {} module =========================='.format(module_name))
     for name, param in module.named_parameters():
         print(f'{name}: \t {param.shape}')
-    print('=====================================================================================')
+    print('===============================================================================')
 
 
 def get_weight_of_module(module, key):
@@ -46,6 +52,11 @@ def median_weight_of_module(module, key):
     return module._parameters[key].median()
 
 
+################################################################################
+#
+# debug-related functions
+#
+################################################################################
 def show_sparsity_of_model(model):
     """ It's used to display the sparsity of the network, including the weight shape
     and number of non-zero weights

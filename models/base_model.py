@@ -5,6 +5,8 @@ functions on model
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+
+from models import debugger
 import hook
 
 __atomic_model__ = [
@@ -34,6 +36,7 @@ class HookModule(nn.Module):
         self._device = device
         self._forward_trace_ids = OrderedDict()   # track the forward  pass
         self._backward_trace_ids = OrderedDict()  # track the backward pass
+        self._session = debugger.Session()
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -142,3 +145,6 @@ class HookModule(nn.Module):
             if type(module).__name__ == module_type:
                 handler = module.register_forward_hook(hook.module_debug)
                 self._forward_trace_ids.update({module : handler.id})
+
+                # add current module
+                self._session.add_module(module)

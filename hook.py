@@ -4,6 +4,19 @@
 import torch
 import torch.nn as nn
 
+_USAGE = r"""
+useful commands:
+    show_details_of_module: display the weights information for current module
+    get_weight_of_module: return weight tensor with name for current module
+    min_weight_of_module: return min value for weight on current module
+    max_weight_of_module: return max value for weight on current module
+    mean_weight_of_module: return mean value for weight on current module
+    median_weight_of_module: return median value for weight on current module
+"""
+
+def module_help():
+    print(f'{_USAGE}')
+
 def module_features(module, input, output):
     """ This hook is performed after the forward on the network
     It's used to dump the feature shape information
