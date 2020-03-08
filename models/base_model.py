@@ -7,6 +7,7 @@ import torch.nn as nn
 from collections import OrderedDict
 
 from models import session
+from models import manager
 from models import checker
 import hook
 
@@ -17,7 +18,8 @@ class HookModule(nn.Module):
         self._device = device
         self._forward_trace_ids = OrderedDict()   # track the forward  pass
         self._backward_trace_ids = OrderedDict()  # track the backward pass
-        self._session = session.Session()
+        self._session = session.Session(manager.DebugSessions.new_session_id())
+        manager.DebugSessions.
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -127,6 +129,12 @@ class HookModule(nn.Module):
             self._session.clear_running_modules()
         self.register_forward_hook(cleanup_running_modules)
 
+        def register_active_module(module, input, output):
+            r"""
+            register an active module into current session
+            """
+            self._session.add_module(module)
+
         for module in self.modules():
             if not checker.is_atomic_module(module):
                 continue
@@ -134,5 +142,5 @@ class HookModule(nn.Module):
                 handler = module.register_forward_hook(hook.module_debug)
                 self._forward_trace_ids.update({module : handler.id})
 
-                # add current module
-                self._session.add_module(module)
+                # register current module
+                module.register_forward_hook(register_active_module)

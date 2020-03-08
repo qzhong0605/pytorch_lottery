@@ -1,4 +1,5 @@
 import torch
+from models import manager
 
 ################################################################################
 #
@@ -51,10 +52,12 @@ def median_weight_of_module(module, key):
     """
     return module._parameters[key].median()
 
+def list_sessions():
+
 
 ################################################################################
 #
-# debug-related functions
+# model-related functions
 #
 ################################################################################
 def show_sparsity_of_model(model):

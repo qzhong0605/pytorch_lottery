@@ -1,17 +1,29 @@
 """ It's a manager, which is used to manage all the running session
 """
 
+from collections import OrderedDict
+
 class DebugSessions(object):
     r"""
     It's a global object to list all the traced sessions
     """
-    __sessions__ = []
+    __sessions__ = OrderedDict()
     __current_session__ = 0   # the current session
     session_idx = 0
 
     @classmethod
-    def register_session(cls, session):
-        cls.__sessions__.append(session)
+    def register_session(cls, session_id, session):
+        r"""
+        add a new session with session_id
+        """
+        cls.__sessions__.update({session_id : session})
+
+    @classmethod
+    def disable_session(cls, session_id):
+        r"""
+        remove a session from current session list
+        """
+        cls.__sessions__.pop(session_id)
 
     @classmethod
     def retrieve_session(cls, idx):
@@ -26,3 +38,11 @@ class DebugSessions(object):
         return_id = session_idx
         session_idx += 1
         return return_id
+
+    @classmethod
+    def sessions(cls):
+        return __sessions__
+
+    @classmethod
+    def current_session(cls):
+        return __current_session__
