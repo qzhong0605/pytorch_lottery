@@ -53,7 +53,7 @@ def median_weight_of_module(module, key):
     return module._parameters[key].median()
 
 def list_sessions():
-
+    pass
 
 ################################################################################
 #

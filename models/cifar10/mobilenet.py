@@ -31,8 +31,8 @@ class MobileNet(base_model.HookModule):
     # (128,2) means conv planes=128, conv stride=2, by default conv stride=1
     cfg = [64, (128,2), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
 
-    def __init__(self, device, num_classes=10):
-        super(MobileNet, self).__init__(device)
+    def __init__(self, device, name, num_classes=10):
+        super(MobileNet, self).__init__(device, name)
         self.preprocess = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(32),
@@ -62,4 +62,4 @@ class MobileNet(base_model.HookModule):
         return F.log_softmax(out)
 
 def build_mobilenet(device):
-    return MobileNet(device).to(device)
+    return MobileNet(device, 'mobilenet').to(device)

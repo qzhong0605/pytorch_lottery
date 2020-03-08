@@ -67,8 +67,8 @@ class BottleNeck(nn.Module):
 
 
 class ResNet(base_model.HookModule):
-    def __init__(self, block, num_blocks, device, num_classes=10):
-        super(ResNet, self).__init__(device)
+    def __init__(self, block, num_blocks, device, name, num_classes=10):
+        super(ResNet, self).__init__(device, name)
         self.in_planes = 64
 
         self.preprocess = nn.Sequential(
@@ -111,16 +111,16 @@ class ResNet(base_model.HookModule):
 
 
 def build_resnet18(device):
-    return ResNet(BasicBlock, [2,2,2,2], device).to(device)
+    return ResNet(BasicBlock, [2,2,2,2], device, 'resnet18').to(device)
 
 def build_resnet34(device):
-    return ResNet(BasicBlock, [3,4,6,3], device).to(device)
+    return ResNet(BasicBlock, [3,4,6,3], device, 'resnet34').to(device)
 
 def build_resnet50(device):
-    return ResNet(BottleNeck, [3,4,6,3], device).to(device)
+    return ResNet(BottleNeck, [3,4,6,3], device, 'resnet50').to(device)
 
 def build_resnet101(device):
-    return ResNet(BottleNeck, [3,4,23,3], device).to(device)
+    return ResNet(BottleNeck, [3,4,23,3], device, 'resnet101').to(device)
 
 def build_resnet152(device):
-    return ResNet(BottleNeck, [3,8,36,3], device).to(device)
+    return ResNet(BottleNeck, [3,8,36,3], device, 'resnet152').to(device)

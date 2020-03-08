@@ -13,13 +13,13 @@ import hook
 
 
 class HookModule(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, name):
         super(HookModule, self).__init__()
         self._device = device
         self._forward_trace_ids = OrderedDict()   # track the forward  pass
         self._backward_trace_ids = OrderedDict()  # track the backward pass
-        self._session = session.Session(manager.DebugSessions.new_session_id())
-        manager.DebugSessions.
+        self._session = session.Session(manager.DebugSessions.new_session_id(),
+                                        name)
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the

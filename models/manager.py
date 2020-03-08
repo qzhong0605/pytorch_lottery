@@ -35,8 +35,8 @@ class DebugSessions(object):
 
     @classmethod
     def new_session_id(cls):
-        return_id = session_idx
-        session_idx += 1
+        return_id = cls.session_idx
+        cls.session_idx += 1
         return return_id
 
     @classmethod

@@ -46,8 +46,8 @@ class MobileNetV2(base_model.HookModule):
            (6, 160, 3, 2),
            (6, 320, 1, 1)]
 
-    def __init__(self, device, num_classes=10):
-        super(MobileNetV2, self).__init__(device)
+    def __init__(self, device, name, num_classes=10):
+        super(MobileNetV2, self).__init__(device, name)
 
         # NOTE: change conv1 stride 2 -> 1 for CIFAR10
         self.preprocess = nn.Sequential(
@@ -88,4 +88,4 @@ class MobileNetV2(base_model.HookModule):
 
 
 def build_mobilenetv2(device):
-    return MobileNetV2(device).to(device)
+    return MobileNetV2(device, 'mobilenetv2').to(device)

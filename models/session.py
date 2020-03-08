@@ -6,12 +6,16 @@ class Session(object):
     r"""
     A session represent a network to be debugged
     """
-    def __init__(self, session_id):
+    def __init__(self, session_id, name):
         self._running_modules = []
         self._session_id = session_id
+        self._name = name
 
     def get_session_id(self):
         return self._session_id
+
+    def get_session_name(self):
+        return self._name
 
     def add_module(self, module):
         r"""

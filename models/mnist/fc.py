@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from models import base_model
 
 class FC(base_model.HookModule):
-    def __init__(self, device):
-        super(FC, self).__init__(device)
+    def __init__(self, device, name):
+        super(FC, self).__init__(device, name)
         self.features = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(28*28, 300),
@@ -22,4 +22,4 @@ class FC(base_model.HookModule):
 
 
 def build_fc(device):
-    return FC(device).to(device)
+    return FC(device, 'fc').to(device)
