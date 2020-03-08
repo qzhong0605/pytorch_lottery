@@ -13,9 +13,9 @@ useful commands:
     mean_weight_of_module: return mean value for weight on current module
     median_weight_of_module: return median value for weight on current module
 """
-
 def module_help():
-    print(f'{_USAGE}')
+    print(r'{_USAGE}')
+
 
 def module_features(module, input, output):
     """ This hook is performed after the forward on the network
@@ -35,6 +35,13 @@ def module_features(module, input, output):
     for __output__ in output:
         print(f'\toutput tensor: {__output__.shape}')
     print(f"===============================================================\n")
+
+
+def register_active_module(module, input, output):
+    r"""
+    register a new active module to be monitored
+    """
+    pass
 
 
 def module_debug(module, input, output):

@@ -6,28 +6,9 @@ import torch
 import torch.nn as nn
 from collections import OrderedDict
 
-from models import debugger
+from models import session
+from models import checker
 import hook
-
-__atomic_model__ = [
-    nn.Conv1d, nn.Conv2d, nn.Conv3d,   # convolution module
-    nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d, # transpose convolution module
-    nn.ReLU, nn.RReLU, nn.ReLU6, nn.LeakyReLU, nn.Sigmoid, # activation module
-    nn.AvgPool1d, nn.AvgPool2d, nn.AvgPool3d, # average pool module
-    nn.MaxPool1d, nn.MaxPool2d, nn.MaxPool3d, # max pool module
-    nn.AdaptiveAvgPool1d, nn.AdaptiveAvgPool2d, nn.AdaptiveAvgPool3d, # adaptive average pool module
-    nn.AdaptiveMaxPool1d, nn.AdaptiveMaxPool2d, nn.AdaptiveMaxPool3d, # adaptive max pool module
-    nn.Linear, # fully-connected module
-    nn.LogSoftmax, # classifier module
-    nn.Flatten,  # flatten module
-    nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, # batch normalization module
-]
-
-def is_atomic_module(module):
-    for __module__ in __atomic_model__:
-        if isinstance(module, __module__):
-            return True
-    return False
 
 
 class HookModule(nn.Module):
@@ -36,7 +17,7 @@ class HookModule(nn.Module):
         self._device = device
         self._forward_trace_ids = OrderedDict()   # track the forward  pass
         self._backward_trace_ids = OrderedDict()  # track the backward pass
-        self._session = debugger.Session()
+        self._session = session.Session()
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -49,7 +30,7 @@ class HookModule(nn.Module):
         """
         _forward_hooks = OrderedDict()
         for module in self.modules():
-            if not is_atomic_module(module):
+            if not checker.is_atomic_module(module):
                 continue
             # current module is an atomic module
             handler = module.register_forward_hook(global_forward_fn)
@@ -64,7 +45,7 @@ class HookModule(nn.Module):
         """
         _pre_forward_hooks = OrderedDict()
         for module in self.modules():
-            if not is_atomic_module(module):
+            if not checker.is_atomic_module(module):
                 continue
             # current module is an atomic module
             handler = module.register_forward_pre_hook(global_forward_fn)
@@ -97,7 +78,7 @@ class HookModule(nn.Module):
         """
         _backward_hooks = OrderedDict()
         for module in self.modules():
-            if not is_atomic_module(module):
+            if not checker.is_atomic_module(module):
                 continue
             handler = module.register_backward_hook(global_backward_fn)
             _backward_hooks.update({module : handler.id})
@@ -136,11 +117,18 @@ class HookModule(nn.Module):
     def trace_module(self, module_type):
         """ set trace on the specified module
 
+        For torch framworks, its network is constructed dynamicly. Therefore,
+        the traced running modules are cleaned up after an forward pass
+
         Args:
             module_type: a string representing module type
         """
+        def cleanup_running_modules(module, input, output):
+            self._session.clear_running_modules()
+        self.register_forward_hook(cleanup_running_modules)
+
         for module in self.modules():
-            if not is_atomic_module(module):
+            if not checker.is_atomic_module(module):
                 continue
             if type(module).__name__ == module_type:
                 handler = module.register_forward_hook(hook.module_debug)
