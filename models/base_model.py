@@ -19,7 +19,7 @@ class HookModule(nn.Module):
         self._forward_trace_ids = OrderedDict()   # track the forward  pass
         self._backward_trace_ids = OrderedDict()  # track the backward pass
         self._session = session.Session(manager.DebugSessions.new_session_id(),
-                                        name)
+                                        name, self)
         manager.DebugSessions.register_session(self._session)
 
     def _register_forward_hook(self, global_forward_fn=None):
@@ -112,11 +112,7 @@ class HookModule(nn.Module):
         """ set trace on all atomic module. The traces are set after performing
         forward pass on module
         """
-        self._forward_trace_ids = self._register_forward_hook(hook.module_debug)
-        def cleanup_running_modules(module, input, output):
-            self._session.clear_running_modules()
-        self.register_forward_hook(cleanup_running_modules)
-
+        self.register_cleanup_running_modules()
         def register_active_module(module, input, output):
             r"""
             register an active module into current session
@@ -131,6 +127,15 @@ class HookModule(nn.Module):
     def clear_trace(self):
         self._unregister_forward_hook(self._forward_trace_ids)
 
+    def register_cleanup_running_modules(self):
+        r"""
+        register an hook to cleanup all running modules. It's performed after
+        forward of network
+        """
+        def cleanup_running_modules(module, input, output):
+            self._session.clear_running_modules()
+        self.register_forward_hook(cleanup_running_modules)
+
     def trace_module(self, module_type):
         """ set trace on the specified module
 
@@ -140,10 +145,7 @@ class HookModule(nn.Module):
         Args:
             module_type: a string representing module type
         """
-        def cleanup_running_modules(module, input, output):
-            self._session.clear_running_modules()
-        self.register_forward_hook(cleanup_running_modules)
-
+        self.register_cleanup_running_modules()
         def register_active_module(module, input, output):
             r"""
             register an active module into current session

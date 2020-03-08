@@ -6,10 +6,14 @@ class Session(object):
     r"""
     A session represent a network to be debugged
     """
-    def __init__(self, session_id, name):
+    def __init__(self, session_id, name, hook_module):
         self._running_modules = []
         self._session_id = session_id
         self._name = name
+        self._hook_module = hook_module    # the debugged network module
+
+    def get_hook_module(self):
+        return self._hook_module
 
     def get_session_id(self):
         return self._session_id
@@ -47,6 +51,8 @@ class Session(object):
         r"""
         Return the lastest running module
         """
+        if len(self._running_modules) == 0:
+            return None
         return self.index_module(len(self._running_modules) - 1)
 
     def number_of_running_modules(self):

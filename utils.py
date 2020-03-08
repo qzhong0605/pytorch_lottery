@@ -57,8 +57,11 @@ def list_sessions():
     for session_id, _ in enumerate(manager.DebugSessions.list_sessions()):
         session = manager.DebugSessions.retrieve_session(session_id)
         last_module = session.last_module()
-        last_idx = session.number_of_running_modules()
-        print(f"""{session_id}: {session.get_session_name()} [module {last_idx-1}: {last_module[0]}]""")
+        if last_module == None:
+            print(f"""{session_id}: {session.get_session_name()}""")
+        else:
+            last_idx = session.number_of_running_modules()
+            print(f"""{session_id}: {session.get_session_name()} [module {last_idx-1}: {last_module[0]}]""")
 
 
 def backtrace_modules(session_id):
@@ -82,6 +85,15 @@ def retrieve_module(session_id, module_id):
     session = manager.DebugSessions.retrieve_session(session_id)
     running_module = session.index_module(module_id)
     return running_module
+
+
+def breakpoint_on_module(session_id, module_type):
+    r"""
+    set breakpoint on all the submodule with type of `module_type` for current network
+    """
+    session = manager.DebugSessions.retrieve_session(session_id)
+    hook_module = session.get_hook_module()
+    hook_module.trace_module(module_type)
 
 
 ################################################################################
