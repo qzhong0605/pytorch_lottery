@@ -12,7 +12,7 @@ def show_details_of_module(module):
     Here, the module includes
     """
     module_name = type(module).__name__
-    print(r'====================== weight of {} module =========================='.format(module_name))
+    print(f'====================== weight of {type(module).__name__} module ==========================')
     for name, param in module.named_parameters():
         print(f'{name}: \t {param.shape}')
     print('===============================================================================')
@@ -52,8 +52,18 @@ def median_weight_of_module(module, key):
     """
     return module._parameters[key].median()
 
+
 def list_sessions():
-    pass
+    for session_id, session in enumerate(manager.DebugSessions.list_sessions()):
+        print(f"""{session_id}: {session}""")
+
+
+def backtrace_modules(session_id):
+    session = manager.DebugSessions.retrieve_session(session_id)
+    print(f"""=================== Running {session.number_of_running_modules()} module =======================""")
+    for idx in range(session.number_of_running_modules()):
+        print(f"""module {idx}: {session.index_module(idx)}""")
+
 
 ################################################################################
 #

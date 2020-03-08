@@ -53,5 +53,7 @@ def module_debug(module, input, output):
     from utils import max_weight_of_module
     from utils import mean_weight_of_module
     from utils import median_weight_of_module
+    from utils import list_sessions
+    from utils import backtrace_modules
 
     import module_ipdb; module_ipdb.set_trace()

@@ -20,6 +20,7 @@ class HookModule(nn.Module):
         self._backward_trace_ids = OrderedDict()  # track the backward pass
         self._session = session.Session(manager.DebugSessions.new_session_id(),
                                         name)
+        manager.DebugSessions.register_session(self._session)
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
@@ -138,9 +139,9 @@ class HookModule(nn.Module):
         for module in self.modules():
             if not checker.is_atomic_module(module):
                 continue
+
+            # register atomic module
+            module.register_forward_hook(register_active_module)
             if type(module).__name__ == module_type:
                 handler = module.register_forward_hook(hook.module_debug)
                 self._forward_trace_ids.update({module : handler.id})
-
-                # register current module
-                module.register_forward_hook(register_active_module)

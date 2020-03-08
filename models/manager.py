@@ -12,11 +12,11 @@ class DebugSessions(object):
     session_idx = 0
 
     @classmethod
-    def register_session(cls, session_id, session):
+    def register_session(cls, session):
         r"""
         add a new session with session_id
         """
-        cls.__sessions__.update({session_id : session})
+        cls.__sessions__.update({session.get_session_id(): session})
 
     @classmethod
     def disable_session(cls, session_id):
@@ -40,9 +40,9 @@ class DebugSessions(object):
         return return_id
 
     @classmethod
-    def sessions(cls):
-        return __sessions__
+    def list_sessions(cls):
+        return cls.__sessions__
 
     @classmethod
     def current_session(cls):
-        return __current_session__
+        return cls.__current_session__
