@@ -134,7 +134,7 @@ class HookModule(nn.Module):
             r"""
             register an active module into current session
             """
-            self._session.add_module(module)
+            self._session.add_module(module, input, output)
 
         for module in self.modules():
             if not checker.is_atomic_module(module):

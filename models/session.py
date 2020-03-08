@@ -17,17 +17,19 @@ class Session(object):
     def get_session_name(self):
         return self._name
 
-    def add_module(self, module):
+    def add_module(self, module, input, output):
         r"""
-        add a new module to be traced
+        add a new module to be traced, including input and output
 
         Args:
             module: an instance of atomic module, such as Conv2d, ReLU etc
+            input: a tuple of tensor
+            output: a tuple of tensor
         """
         if not checker.is_atomic_module(module):
             print(f'module {type(module).__name__} is not an atomic module')
             return
-        self._running_modules.append(module)
+        self._running_modules.append((module, input, output))
 
     def index_module(self, idx):
         r"""

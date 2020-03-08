@@ -62,12 +62,16 @@ def backtrace_modules(session_id):
     session = manager.DebugSessions.retrieve_session(session_id)
     print(f"""===================== Running {session.number_of_running_modules()} module =========================""")
     for idx in range(session.number_of_running_modules()):
-        print(f"""module {idx}: {session.index_module(idx)}""")
+        running_module = session.index_module(idx)
+        print(f"""module {idx}: {running_module[0]}""")
+        print(f"""\tInput: {running_module[1][0].shape}""")
+        print(f"""\tOutput: {running_module[2][0].shape}""")
 
 
 def retrieve_module(session_id, module_id):
     session = manager.DebugSessions.register_session(session_id)
     running_module = session.index_module(module_id)
+    return running_module
 
 
 ################################################################################
