@@ -82,7 +82,13 @@ def backtrace_modules(session_id):
 
 
 def retrieve_module(session_id, module_id):
+    r"""
+    Retrieve an module with session id and module id. If not exist, return None
+    """
     session = manager.DebugSessions.retrieve_session(session_id)
+    if session is None:
+        print(f"""session ${session_id} doesn't exist""")
+        return None
     running_module = session.index_module(module_id)
     return running_module
 
@@ -92,8 +98,23 @@ def breakpoint_on_module(session_id, module_type):
     set breakpoint on all the submodule with type of `module_type` for current network
     """
     session = manager.DebugSessions.retrieve_session(session_id)
+    if session is None:
+        print(f"""session ${session_id} doesn't exist""")
+        return
     hook_module = session.get_hook_module()
     hook_module.trace_module(module_type)
+
+
+def clear_breakpoint(session_id):
+    r"""
+    Cleanup the existing breakpoints on submodule of network
+    """
+    session = manager.DebugSessions.retrieve_session(session_id)
+    if session is None:
+        print(f"""session ${session_id} doesn't exist""")
+        return
+    hook_module = session_id.get_hook_module()
+    hook_module.clear_trace()
 
 
 ################################################################################

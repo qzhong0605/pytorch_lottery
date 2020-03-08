@@ -27,6 +27,8 @@ class DebugSessions(object):
 
     @classmethod
     def retrieve_session(cls, idx):
+        if idx not in __sessions__:
+            return None
         return cls.__sessions__[idx]
 
     @classmethod

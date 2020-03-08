@@ -52,5 +52,6 @@ def module_debug(module, input, output):
     from utils import list_sessions
     from utils import backtrace_modules
     from utils import retrieve_module
+    from utils import clear_breakpoint
 
     import module_ipdb; module_ipdb.set_trace()
