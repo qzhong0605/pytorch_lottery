@@ -126,7 +126,14 @@ def show_sparsity_of_model(model):
     """ It's used to display the sparsity of the network, including the weight shape
     and number of non-zero weights
     """
-    pass
+    eps = 1e-5
+    print(f"\n\n============================ sparsity =========================================")
+    for name, param in model.named_parameters():
+        nonzero = param.abs() > eps
+        num_nonzero = len(nonzero.nonzero())
+        total = param.shape.numel()
+        print(f'{name}:  {num_nonzero}  |  {total}  | sparsity: {1. * num_nonzero / total}')
+    print(f"================================================================================")
 
 
 def setup_dataloader(batch_size):
