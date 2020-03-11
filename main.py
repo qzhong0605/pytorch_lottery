@@ -2,6 +2,7 @@ import torch
 import torchvision
 import time
 import sys
+import os
 import argparse
 from torch import optim
 import torch.nn.functional as F
@@ -17,7 +18,7 @@ import utils
 # global best accuracy
 best_acc = 0
 
-def train(args, model, device, train_loader, optimizer, epoch):
+def train(args, model, device, train_loader, optimizer, epoch, file_handler):
     model.train()
 
     start = time.time()
@@ -42,10 +43,11 @@ def train(args, model, device, train_loader, optimizer, epoch):
                 100. * correct / len(data),
                 (end - start) * 1. / args.log_interval
             ))
+            file_handler.write(f'{epoch},{batch_idx},{loss.item()},{correct* 1./len(data)}, {(end-start) * 1./args.log_interval}\n')
             start = time.time()
 
 
-def test(args, model, device, test_loader, epoch):
+def test(args, model, device, test_loader, epoch, file_handler):
     model.eval()
     global best_acc
 
@@ -65,11 +67,11 @@ def test(args, model, device, test_loader, epoch):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)
     ))
+    file_handler.write(f'Test {epoch}, {test_loss}, {correct* 1./len(test_loader.dataset)}\n')
 
     # save checkpoint
     acc = 100. * correct / len(test_loader.dataset)
     if acc > best_acc:
-        import os
         dataset = args.model_type.split('_')[0]
         if not os.path.exists(f'checkpoint/{dataset}'):
             os.makedirs(f'checkpoint/{dataset}')
@@ -159,7 +161,6 @@ def main(args):
     start_epoch = 0
     # resume from the previous saved checkpoint
     if args.resume:
-        import os
         assert os.path.exists(f'{args.checkpoint_model}'), f'Error: {args.checkpoint_model} not found'
         print("=============== restoring from checkpoint ======================")
         checkpoint = torch.load(f'{args.checkpoint_model}')
@@ -169,10 +170,19 @@ def main(args):
 
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
+
+    # write experiments to log
+    dataset_name, model_type = args.model_type.split('_')
+    if not os.path.exists(f'experiments/{dataset_name}/{model_type}'):
+        os.makedirs(f'experiments/{dataset_name}/{model_type}')
+
+    log_handler = open(f'experiments/{dataset_name}/{model_type}/{time.time()}.log', 'w')
     for epoch in range(start_epoch, start_epoch + args.epochs):
-        train(args, model, device, train_loader, optimizer, epoch)
-        test(args, model, device, test_loader, epoch)
+        train(args, model, device, train_loader, optimizer, epoch, log_handler)
+        test(args, model, device, test_loader, epoch, log_handler)
+        log_handler.flush()
         scheduler.step()
+    log_handler.close()
 
 
 def init_args():
