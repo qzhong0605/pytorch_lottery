@@ -5,11 +5,13 @@ functions on model
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+from typing import Union
 
 from models import session
 from models import manager
 from models import checker
 import hook
+import numpy as np
 
 
 class HookModule(nn.Module):
@@ -21,6 +23,66 @@ class HookModule(nn.Module):
         self._session = session.Session(manager.DebugSessions.new_session_id(),
                                         name, self)
         manager.DebugSessions.register_session(self._session)
+
+        # track the mask of weights. The key is the weight tensor and the value
+        # is a tuple, including mask tensor and weight name
+        self._weight_mask = OrderedDict()
+        self._real_module = None
+
+    def apply_weight_mask(self):
+        r"""
+        It's used for model pruning. The pruing weights are expressed by mask.
+        For a network forwarding, the weight must be multiplied with mask
+        """
+        def update_weights_before_forward(module, input):
+            # ignore bias parameter
+            if len(module._parameters) == 0:
+                return
+            weight = module._parameters['weight']
+            weight_mask = self._weight_mask[id(weight)][0]
+            new_weight = weight * weight_mask
+            weight.data = new_weight
+
+        self._register_preforward_hook(update_weights_before_forward)
+
+    def _init_weight_mask(self, module):
+        for name, param in module.named_parameters():
+            mask = torch.ones(param.shape)
+            self._weight_mask.update({id(param) : (mask.to(self._device), name)})
+        self._real_module = module
+
+    def pruning_with_percentile(self, q: float):
+        r""" pruning weights with specified percent. If the values are less than
+        percentile value, the mask would be set to 0; or else to 1
+
+        :param q: float, a percent float. It must be between 0 and 1 inclusive
+        """
+        def percentile(t: torch.Tensor, q: float) -> Union(int, float):
+            r""" Return the ``q``-th percentile of the flattened input tensor's data
+            It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
+            """
+            k = 1 + round(.01 * float(q) * (t.numel() - 1))
+            result = t.view(-1).kthvalue(k).values.item()
+            return result
+
+        if self._real_module is None:
+            return
+        for name, param in self._real_module.named_parameters():
+            cpu_param = param.cpu()
+            old_mask = self._weight_mask[id(param)]
+            real_param = cpu_param * old_mask
+            percentile_value = percentile(real_param, q)
+            cpu_mask = torch.where(real_param < percentile_value, 0, 1)
+            self._weight_mask.update({id(param) : (cpu_mask.to(self._device), name)})
+
+    def init_weight_mask(self):
+        r"""
+        For model pruning, the weights are pruning through mask. If the value of
+        a weight is not meaningful, it would be set to 0 on the mask matrix.
+
+        It should be implemented by the specific network model
+        """
+        raise NotImplementedError('You should implement on the specific module')
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the

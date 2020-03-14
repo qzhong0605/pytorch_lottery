@@ -44,6 +44,9 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler):
                 (end - start) * 1. / args.log_interval
             ))
             file_handler.write(f'{epoch},{batch_idx},{loss.item()},{correct* 1./len(data)}, {(end-start) * 1./args.log_interval}\n')
+
+            # show weights sparisity for model
+            utils.show_sparsity_of_model(model)
             start = time.time()
 
 
@@ -177,6 +180,10 @@ def main(args):
         os.makedirs(f'experiments/{dataset_name}/{model_type}')
 
     log_handler = open(f'experiments/{dataset_name}/{model_type}/{time.time()}.log', 'w')
+
+    # apply model prunning
+    model.apply_weight_mask()
+    model.init_weight_mask()
     for epoch in range(start_epoch, start_epoch + args.epochs):
         train(args, model, device, train_loader, optimizer, epoch, log_handler)
         test(args, model, device, test_loader, epoch, log_handler)

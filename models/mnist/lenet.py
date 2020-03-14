@@ -26,6 +26,10 @@ class LeNet(base_model.HookModule):
             nn.Linear(256, num_classes)
         )
 
+    def init_weight_mask(self):
+        """initialize the weight mask for all the parameters"""
+        self._init_weight_mask(self)
+
     def forward(self, x):
         out = self.features(x)
         out = self.flatten(out)
