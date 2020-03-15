@@ -28,7 +28,9 @@ class LeNet(base_model.HookModule):
 
     def init_weight_mask(self):
         """initialize the weight mask for all the parameters"""
-        self._init_weight_mask(self)
+        for name, param in self.named_parameters():
+            self._weight.update({name : param})
+        self._init_weight_mask()
 
     def forward(self, x):
         out = self.features(x)

@@ -27,7 +27,7 @@ class HookModule(nn.Module):
         # track the mask of weights. The key is the weight tensor and the value
         # is a tuple, including mask tensor and weight name
         self._weight_mask = OrderedDict()
-        self._real_module = None
+        self._weight = OrderedDict()
 
     def apply_weight_mask(self):
         r"""
@@ -45,11 +45,10 @@ class HookModule(nn.Module):
 
         self._register_preforward_hook(update_weights_before_forward)
 
-    def _init_weight_mask(self, module):
-        for name, param in module.named_parameters():
+    def _init_weight_mask(self):
+        for name, param in self._weight.items():
             mask = torch.ones(param.shape)
             self._weight_mask.update({id(param) : (mask.to(self._device), name)})
-        self._real_module = module
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
@@ -65,9 +64,9 @@ class HookModule(nn.Module):
             result = t.view(-1).kthvalue(k).values.item()
             return result
 
-        if self._real_module is None:
+        if len(self._weight) == 0:
             return
-        for name, param in self._real_module.named_parameters():
+        for name, param in self._weight.items():
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)]
             real_param = cpu_param * old_mask

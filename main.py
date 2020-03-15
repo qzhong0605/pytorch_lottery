@@ -4,6 +4,7 @@ import time
 import sys
 import os
 import argparse
+import yaml
 from torch import optim
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import StepLR
@@ -95,9 +96,19 @@ def get_target_model(dataset_name, model_name, device):
 
 
 def main(args):
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    if not os.path.exists(args.config):
+        print(f"training configure for network doesn't exist")
+        sys.exit(1)
+
+    with open(args.config, 'r') as config_stream:
+        setup = yaml.safe_load(config_stream)
+    use_cuda = False
+    if setup['DEVICE']['TYPE'] == 'cuda' and torch.cuda.is_available():
+        use_cuda = True
     kwargs = {'num_workers' : 1, 'pin_memory': True} if use_cuda else {}
-    dataset, model_name = args.model_type.split('_')
+
+    dataset = setup['DATASET']['NAME']
+    model_name = setup['MODEL']
     if dataset not in model_list.__model__:
         print('dataset {} not supported yet and exit program'.format(dataset))
         sys.exit(1)
@@ -111,38 +122,39 @@ def main(args):
 
     if dataset == 'mnist':
       train_loader = torch.utils.data.DataLoader(
-          datasets.MNIST('data', train=True, download=True,
+          datasets.MNIST(setup['DATASET']['DIR'], train=True, download=True,
                          transform=transforms.Compose([
                              transforms.ToTensor(),
-                             transforms.Normalize((0.1307, ), (0.3081, ))
+                             transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
                          ])),
-          batch_size=args.batch_size, shuffle=True, **kwargs
+          batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
       )
       test_loader = torch.utils.data.DataLoader(
-          datasets.MNIST('data', train=False, download=True,
+          datasets.MNIST(setup['DATASET']['DIR'], train=False, download=True,
                          transform=transforms.Compose([
                              transforms.ToTensor(),
-                             transforms.Normalize((0.1307, ), (0.3081, ))
+                             transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
                          ])),
-          batch_size=args.test_batch_size, shuffle=True, **kwargs
+          batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=True, **kwargs
       )
     elif dataset == 'cifar10':
         train_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10('data', train=True, download=True,
+            datasets.CIFAR10(setup['DATASET']['DIR'], train=True, download=True,
                              transform=transforms.Compose([
                                  transforms.RandomCrop(32, padding=4),
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
-                                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
                              ])),
-            batch_size=args.batch_size, shuffle=True, **kwargs
+            batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
         )
         test_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10('data', train=False, download=True,
+            datasets.CIFAR10(setup['DATASET']['DIR'], train=False, download=True,
                              transform=transforms.Compose([
                                  transforms.ToTensor(),
-                                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
                              ])),
+            batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=True, **kwargs
         )
 
     device = torch.device('cuda' if use_cuda else 'cpu')
@@ -164,27 +176,25 @@ def main(args):
     start_epoch = 0
     # resume from the previous saved checkpoint
     if args.resume:
-        assert os.path.exists(f'{args.checkpoint_model}'), f'Error: {args.checkpoint_model} not found'
+        assert os.path.exists(f"{setup['SOLVER']['CHECKPOINT']}"), f"Error: {setup['SOLVER']['CHECKPOINT']} not found"
         print("=============== restoring from checkpoint ======================")
-        checkpoint = torch.load(f'{args.checkpoint_model}')
+        checkpoint = torch.load(f"{setup['SOLVER']['CHECKPOINT']}")
         model.load_state_dict(checkpoint['weights'])
         start_epoch = checkpoint['epoch']
         print(f"restart epoch {start_epoch} and last accuracy {checkpoint['acc']}%")
 
-    optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
-    scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
+    optimizer = optim.Adadelta(model.parameters(), lr=setup['SOLVER']['LR'])
+    scheduler = StepLR(optimizer, step_size=1, gamma=setup['SOLVER']['GAMMA'])
 
     # write experiments to log
-    dataset_name, model_type = args.model_type.split('_')
-    if not os.path.exists(f'experiments/{dataset_name}/{model_type}'):
-        os.makedirs(f'experiments/{dataset_name}/{model_type}')
-
-    log_handler = open(f'experiments/{dataset_name}/{model_type}/{time.time()}.log', 'w')
+    if not os.path.exists(f'experiments/{dataset}/{model_name}'):
+        os.makedirs(f'experiments/{dataset}/{model_name}')
+    log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
 
     # apply model prunning
     model.apply_weight_mask()
     model.init_weight_mask()
-    for epoch in range(start_epoch, start_epoch + args.epochs):
+    for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
         train(args, model, device, train_loader, optimizer, epoch, log_handler)
         test(args, model, device, test_loader, epoch, log_handler)
         log_handler.flush()
@@ -194,46 +204,22 @@ def main(args):
 
 def init_args():
     parser = argparse.ArgumentParser(description='lottery network training')
-    parser.add_argument('--init-type', type=str, default='random',
-                        help='the initialization type after pruning, including random and lottery')
-    parser.add_argument('--batch-size', type=int, default=64,
-                        help='input batch size for training(default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=128,
-                        help='input batch size for evaluating(default: 128)')
-    parser.add_argument('--lr', type=float, default=0.1,
-                        help='learning rate(default: 0.1)')
-    parser.add_argument('--gamma', type=float, default=0.7,
-                        help='learning rate step gamma(default: 0.7)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disable CUDA training')
-    parser.add_argument('--epochs', type=int, default=14,
-                        help='number of epochs to train(default: 14)')
     parser.add_argument('--log-interval', type=int, default=10,
                         help='how many batches to wait before print training status')
-    parser.add_argument('--model-type', type=str, required=True,
-                        help='which model to be trained, whose name components include dataset and real model name'
-                        'such as mnist_convnet')
     parser.add_argument('--verbose', action='store_true', default=False,
                         help='print the details of the model, including weights and shapes')
     parser.add_argument('--features', action='store_true', default=False,
                         help='dump the details for network feature')
-    parser.add_argument('--resume', action='store_true', default=False,
-                        help='resume from a last saved checkpoint')
-    parser.add_argument('--channel', type=int, default=1,
-                        help='the channel for input data')
-    parser.add_argument('--height', type=int, default=28,
-                        help='the height for input data(default mnist)')
-    parser.add_argument('--width', type=int, default=28,
-                        help='the width for input data(default mnist)')
-    parser.add_argument('--checkpoint-model', type=str,
-                        help='a checkpoint model saved on disk')
     parser.add_argument('--model-debug', action='store_true', default=False,
                         help='used to trace all the module')
     parser.add_argument('--module-debug', action='store_true', default=False,
                         help='used to trace a specified type of module')
     parser.add_argument('--module', type=str,
                         help='the target module type name')
-
+    parser.add_argument('--config', type=str,
+                        help='model-related hyper-parameters, including dataset, model architecture and schedule')
+    parser.add_argument('--resume', action='store_true', default=False,
+                        help='whether to resume training from the last checkpoint state')
     args = parser.parse_args()
     return args
 
