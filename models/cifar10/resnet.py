@@ -86,7 +86,6 @@ class ResNet(base_model.HookModule):
         self.flatten = nn.Flatten(start_dim=1)
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
-
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks - 1)
         layers = []
@@ -94,6 +93,11 @@ class ResNet(base_model.HookModule):
             layers.append(block(self.in_planes, planes, stride))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
+
+    def init_weight_mask(self):
+        for name, param in self.named_parameters():
+            self._weight.update({name : param})
+        self._init_weight_mask()
 
     def forward(self, x):
         out = self.preprocess(x)

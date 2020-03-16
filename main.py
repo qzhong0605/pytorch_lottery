@@ -19,7 +19,7 @@ import utils
 # global best accuracy
 best_acc = 0
 
-def train(args, model, device, train_loader, optimizer, epoch, file_handler):
+def train(args, model, device, train_loader, optimizer, epoch, file_handler, setup):
     model.train()
 
     start = time.time()
@@ -47,11 +47,11 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler):
             file_handler.write(f'{epoch},{batch_idx},{loss.item()},{correct* 1./len(data)}, {(end-start) * 1./args.log_interval}\n')
 
             # show weights sparisity for model
-            utils.show_sparsity_of_model(model)
+            # utils.show_sparsity_of_model(model)
             start = time.time()
 
 
-def test(args, model, device, test_loader, epoch, file_handler):
+def test(args, model, device, test_loader, epoch, file_handler, setup):
     model.eval()
     global best_acc
 
@@ -76,11 +76,11 @@ def test(args, model, device, test_loader, epoch, file_handler):
     # save checkpoint
     acc = 100. * correct / len(test_loader.dataset)
     if acc > best_acc:
-        dataset = args.model_type.split('_')[0]
+        dataset = setup['DATASET']['NAME']
         if not os.path.exists(f'checkpoint/{dataset}'):
             os.makedirs(f'checkpoint/{dataset}')
         state = {
-            'epoch' : args.epochs,
+            'epoch' : epoch,
             'weights' : model.state_dict(),
             'acc' : acc
         }
@@ -195,8 +195,8 @@ def main(args):
     model.apply_weight_mask()
     model.init_weight_mask()
     for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
-        train(args, model, device, train_loader, optimizer, epoch, log_handler)
-        test(args, model, device, test_loader, epoch, log_handler)
+        train(args, model, device, train_loader, optimizer, epoch, log_handler, setup)
+        test(args, model, device, test_loader, epoch, log_handler, setup)
         log_handler.flush()
         scheduler.step()
     log_handler.close()
