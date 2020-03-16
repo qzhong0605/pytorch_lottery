@@ -8,6 +8,7 @@ import yaml
 from torch import optim
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import MultiStepLR
 
 import torchvision
 from torchvision import datasets, transforms
@@ -183,8 +184,26 @@ def main(args):
         start_epoch = checkpoint['epoch']
         print(f"restart epoch {start_epoch} and last accuracy {checkpoint['acc']}%")
 
-    optimizer = optim.Adadelta(model.parameters(), lr=setup['SOLVER']['LR'])
-    scheduler = StepLR(optimizer, step_size=1, gamma=setup['SOLVER']['GAMMA'])
+    if setup['SOLVER']['OPTIMIZER'] == 'adam':
+        optimizer = optim.Adam(model.parameters(), lr=setup['SOLVER']['LR'],
+                               weight_decay=setup['SOLVER']['WEIGHT_DECAY'])
+    elif setup['SOLVER']['OPTIMIZER'] == 'sgd':
+        optimizer = optim.SGD(model.parameters(), lr=setup['SOLVER']['LR'],
+                              weight_decay=setup['SOLVER']['WEIGHT_DECAY'],
+                              momentum=setup['SOLVER']['MOMENTUM'])
+    elif setup['SOLVER']['OPTIMIZER'] == 'adadelta':
+        optimizer = optim.Adadelta(model.parameters(), lr=setup['SOLVER']['LR'],
+                                   weight_decay=setup['SOLVER']['WEIGHT_DECAY'])
+    else:
+        print(f"optimizer {setup['SOLVER']['OPTIMIZER']} is not supported yet")
+        sys.exit(1)
+
+    if type(setup['SOLVER']['STEP_SIZE']) == int:
+        scheduler = StepLR(optimizer, step_size=setup['SOLVER']['STEP_SIZE'],
+                           gamma=setup['SOLVER']['GAMMA'])
+    else:
+        scheduler = MultiStepLR(optimizer, milestones=setup['SOLVER']['STEP_SIZE'],
+                                gamma=setup['SOLVER']['GAMMA'])
 
     # write experiments to log
     if not os.path.exists(f'experiments/{dataset}/{model_name}'):
