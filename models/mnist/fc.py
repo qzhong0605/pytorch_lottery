@@ -15,11 +15,6 @@ class FC(base_model.HookModule):
             nn.Linear(100, 10)
         )
 
-    def init_weight_mask(self):
-        for name, param in self.named_parameters():
-            self._weight.update({name : param})
-        self._init_weight_mask()
-
     def forward(self,x):
         out = self.features(x)
         output = F.log_softmax(out)
