@@ -26,7 +26,6 @@ class HookModule(nn.Module):
         # track the mask of weights. The key is the weight tensor id and the value
         # is a tuple, including mask tensor and weight name
         self._weight_mask = OrderedDict()
-        self._weight = OrderedDict()
         # map from the weight name to weight id, where the names and ids are
         # boths unique
         self._weight_nameids = OrderedDict()
@@ -42,14 +41,14 @@ class HookModule(nn.Module):
                 return
             weight = module._parameters['weight']
             weight_mask = self._weight_mask[id(weight)][0]
-            new_weight = weight * weight_mask
-            weight.data = new_weight
+            weight.data = weight * weight_mask
 
         self._register_preforward_hook(update_weights_before_forward)
 
-    def _init_weight_mask(self):
-        for name, param in self._weight.items():
+    def init_weight_mask(self):
+        for name, param in self.named_parameters():
             mask = torch.ones(param.shape)
+            self._weight_nameids.update({name : id(param)})
             self._weight_mask.update({id(param) : (mask.to(self._device), name)})
 
     def checkpoint(self, filename):
@@ -82,6 +81,11 @@ class HookModule(nn.Module):
         """
         assert os.path.exists(filename), f'model file {filename} must exist'
         state = torch.load(filename)
+        self.load_state_dict(state['weight'])
+
+        for name, mask in state['mask'].items():
+            weight_id = self._weight_nameids[name]
+            self._weight_mask.update({weight_id : (mask.to(self._device), name)})
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
@@ -106,15 +110,6 @@ class HookModule(nn.Module):
             percentile_value = percentile(real_param, q)
             cpu_mask = torch.where(real_param < percentile_value, 0, 1)
             self._weight_mask.update({id(param) : (cpu_mask.to(self._device), name)})
-
-    def init_weight_mask(self):
-        r"""
-        For model pruning, the weights are pruning through mask. If the value of
-        a weight is not meaningful, it would be set to 0 on the mask matrix.
-
-        It should be implemented by the specific network model
-        """
-        raise NotImplementedError('You should implement on the specific module')
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the
