@@ -235,7 +235,7 @@ def init_args():
                         help='used to trace a specified type of module')
     parser.add_argument('--module', type=str,
                         help='the target module type name')
-    parser.add_argument('--config', type=str,
+    parser.add_argument('--config', type=str, required=True,
                         help='model-related hyper-parameters, including dataset, model architecture and schedule')
     parser.add_argument('--resume', action='store_true', default=False,
                         help='whether to resume training from the last checkpoint state')
