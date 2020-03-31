@@ -3,13 +3,12 @@ functions on model
 """
 
 import torch
+import os
 import torch.nn as nn
 from collections import OrderedDict
 from typing import Union
 
-from models import session
-from models import manager
-from models import checker
+from models import session, manager, checker
 import hook
 import numpy as np
 
@@ -24,10 +23,13 @@ class HookModule(nn.Module):
                                         name, self)
         manager.DebugSessions.register_session(self._session)
 
-        # track the mask of weights. The key is the weight tensor and the value
+        # track the mask of weights. The key is the weight tensor id and the value
         # is a tuple, including mask tensor and weight name
         self._weight_mask = OrderedDict()
         self._weight = OrderedDict()
+        # map from the weight name to weight id, where the names and ids are
+        # boths unique
+        self._weight_nameids = OrderedDict()
 
     def apply_weight_mask(self):
         r"""
@@ -49,6 +51,37 @@ class HookModule(nn.Module):
         for name, param in self._weight.items():
             mask = torch.ones(param.shape)
             self._weight_mask.update({id(param) : (mask.to(self._device), name)})
+
+    def checkpoint(self, filename):
+        r""" when performing traing operation, it's used to save the weights and
+        mask for the current state of network. It's useful to restore the last
+        state for resuming training
+
+        :param filename: string, representing the checkpoint file name
+        """
+        weights_mask = OrderedDict()
+
+        assert isinstance(self._device, torch.device), 'device field must be typeof torch.device'
+        for _, mask in self._weight_mask.items():
+            if self._device.type == 'cpu':
+                weights_mask.update({mask[1] : mask[0]})
+            else:
+                weights_mask.update({mask[1] : mask[0].to('cpu')})
+        state = {
+            'mask' : weights_mask,
+            'weight' : self._weight
+        }
+        torch.save(state, filename)
+
+    def restore_state(self, filename):
+        r""" For pruning algorithm, it's useful to restore the weights of network
+        to the last pruning operation. Therefore, it restores the weights from a
+        disk file
+
+        :param filename: string, representing a disk file containing the state of network
+        """
+        assert os.path.exists(filename), f'model file {filename} must exist'
+        state = torch.load(filename)
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
