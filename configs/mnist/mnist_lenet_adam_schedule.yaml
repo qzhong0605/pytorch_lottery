@@ -1,0 +1,31 @@
+# where to run the model, including cuda and cpu
+# If the type is cpu, the ids for device don't have any meanings
+DEVICE:
+    TYPE: 'cuda'
+    IDS: [0]
+
+# input dataset
+DATASET:
+    NAME: 'mnist'
+    # where to hold the dataset. If not exists, it would download to here.
+    DIR: 'data'
+    # mean and standard deviation for data preprocessing 
+    MEAN: [0.1307]
+    DEVIATION: [0.3081]
+    TRAIN_BATCHSIZE: 64
+    EVAL_BATCHSIZE: 64
+
+# model architecture name
+MODEL: 'lenet'
+
+# hyper-paramters for training model
+SOLVER:
+    LR: 0.01
+    GAMMA: 0.7
+    OPTIMIZER: 'adam'     # which kind of optimizer method
+    STEP_SIZE: 1   # it can be an along number or a list of number
+    WEIGHT_DECAY: 0.001
+    # the total number of iterations
+    TOTAL_EPOCHES: 20 
+    # checkpoint-related parameter 
+    CHECKPINT:  'checkpoint'

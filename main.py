@@ -227,7 +227,7 @@ def main(args):
     # do the initialization for network pruning
     model.apply_weight_mask()
     model.init_weight_mask()
-    if not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
+    if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 
     for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
