@@ -26,8 +26,7 @@ class HookModule(nn.Module):
         # track the mask of weights. The key is the weight tensor id and the value
         # is a tuple, including mask tensor and weight name
         self._weight_mask = OrderedDict()
-        # map from the weight name to weight id, where the names and ids are
-        # boths unique
+        # a map from the weight name to weight id
         self._weight_nameids = OrderedDict()
 
     def apply_weight_mask(self):
@@ -41,7 +40,7 @@ class HookModule(nn.Module):
                 return
             weight = module._parameters['weight']
             weight_mask = self._weight_mask[id(weight)][0]
-            weight.data = weight * weight_mask
+            weight.data = weight * weight_mask.to(self._device)
 
         self._register_preforward_hook(update_weights_before_forward)
 
@@ -49,7 +48,7 @@ class HookModule(nn.Module):
         for name, param in self.named_parameters():
             mask = torch.ones(param.shape)
             self._weight_nameids.update({name : id(param)})
-            self._weight_mask.update({id(param) : (mask.to(self._device), name)})
+            self._weight_mask.update({id(param) : (mask, name)})
 
     def checkpoint(self, filename):
         r""" when performing traing operation, it's used to save the weights and
@@ -59,13 +58,9 @@ class HookModule(nn.Module):
         :param filename: string, representing the checkpoint file name
         """
         weights_mask = OrderedDict()
-
-        assert isinstance(self._device, torch.device), 'device field must be typeof torch.device'
         for _, mask in self._weight_mask.items():
-            if self._device.type == 'cpu':
-                weights_mask.update({mask[1] : mask[0]})
-            else:
-                weights_mask.update({mask[1] : mask[0].to('cpu')})
+            weights_mask.update({mask[1] : mask[0]})
+
         state = {
             'mask' : weights_mask,
             'weight' : self.state_dict()
@@ -85,7 +80,7 @@ class HookModule(nn.Module):
 
         for name, mask in state['mask'].items():
             weight_id = self._weight_nameids[name]
-            self._weight_mask.update({weight_id : (mask.to(self._device), name)})
+            self._weight_mask.update({weight_id : (mask, name)})
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
@@ -97,8 +92,8 @@ class HookModule(nn.Module):
             r""" Return the ``q``-th percentile of the flattened input tensor's data
             It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
             """
-            k = 1 + round(.01 * float(q) * (t.numel() - 1))
-            result = t.view(-1).kthvalue(k).values.item()
+            k = 1 + round(float(q) * (t.numel() - 1))
+            result = t.view(-1).abs().kthvalue(k).values.item()
             return result
 
         if len(self._weight_mask) == 0:
@@ -108,8 +103,9 @@ class HookModule(nn.Module):
             old_mask = self._weight_mask[id(param)][0]
             real_param = cpu_param * old_mask
             percentile_value = percentile(real_param, q)
-            cpu_mask = torch.where(real_param < percentile_value, 0, 1)
-            self._weight_mask.update({id(param) : (cpu_mask.to(self._device), name)})
+            new_mask = torch.where(real_param.abs() < percentile_value,
+                                   torch.zeros_like(old_mask), old_mask)
+            self._weight_mask.update({id(param) : (new_mask, name)})
 
     def _register_forward_hook(self, global_forward_fn=None):
         """ register an forward hook, which would be performed on all the

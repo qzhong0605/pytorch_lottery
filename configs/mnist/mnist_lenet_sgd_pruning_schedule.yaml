@@ -5,6 +5,8 @@ PRUNING:
     COMPRESSION_RATE: [0.5, 0.6, 0.7]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'random'
+    # where to store the last state when pruing network
+    DIR: '.running'
 
 # where to run the model, including cuda and cpu
 # If the type is cpu, the ids for device don't have any meanings
