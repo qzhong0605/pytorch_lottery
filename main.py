@@ -20,11 +20,25 @@ import utils
 # global best accuracy
 best_acc = 0
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+
 def train(args, model, device, train_loader, optimizer, epoch, file_handler, setup):
     model.train()
 
     start = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
+        if 'PRUNING' in setup:
+            # perform the network pruning if on the pruning interval
+            cur_iter = epoch * len(train_loader) + batch_idx
+            pruning_interval = setup['PRUNING']['ITERATION']
+            iter_idx = 0
+            for interval in pruning_interval:
+                if interval == cur_iter:
+                    pruning_rate = setup['PRUNING']['COMPRESSION_RATE'][iter_idx]
+                    model.pruning_with_percentile(pruning_rate)
+                    break
+                iter_idx += 1
+
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -210,9 +224,12 @@ def main(args):
         os.makedirs(f'experiments/{dataset}/{model_name}')
     log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
 
-    # apply model prunning
+    # do the initialization for network pruning
     model.apply_weight_mask()
     model.init_weight_mask()
+    if not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
+        os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
+
     for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
         train(args, model, device, train_loader, optimizer, epoch, log_handler, setup)
         test(args, model, device, test_loader, epoch, log_handler, setup)

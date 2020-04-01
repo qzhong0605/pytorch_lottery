@@ -68,7 +68,7 @@ class HookModule(nn.Module):
                 weights_mask.update({mask[1] : mask[0].to('cpu')})
         state = {
             'mask' : weights_mask,
-            'weight' : self._weight
+            'weight' : self.state_dict()
         }
         torch.save(state, filename)
 
@@ -93,7 +93,7 @@ class HookModule(nn.Module):
 
         :param q: float, a percent float. It must be between 0 and 1 inclusive
         """
-        def percentile(t: torch.Tensor, q: float) -> Union(int, float):
+        def percentile(t: torch.Tensor, q: float) -> Union[int, float]:
             r""" Return the ``q``-th percentile of the flattened input tensor's data
             It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
             """
@@ -101,11 +101,11 @@ class HookModule(nn.Module):
             result = t.view(-1).kthvalue(k).values.item()
             return result
 
-        if len(self._weight) == 0:
+        if len(self._weight_mask) == 0:
             return
-        for name, param in self._weight.items():
+        for name, param in self.named_parameters():
             cpu_param = param.cpu()
-            old_mask = self._weight_mask[id(param)]
+            old_mask = self._weight_mask[id(param)][0]
             real_param = cpu_param * old_mask
             percentile_value = percentile(real_param, q)
             cpu_mask = torch.where(real_param < percentile_value, 0, 1)
