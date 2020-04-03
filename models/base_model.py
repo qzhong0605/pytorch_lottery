@@ -4,6 +4,7 @@ functions on model
 
 import torch
 import os
+import math
 import torch.nn as nn
 from collections import OrderedDict
 from typing import Union
@@ -12,6 +13,12 @@ from models import session, manager, checker
 import hook
 import numpy as np
 
+
+def tensor_nonzero(t:torch.Tensor):
+    """return an flattened tensor, which filled with nonzero elements"""
+    np_t = t.numpy()
+    nonzero = np_t[np_t.nonzero()]
+    return torch.from_numpy(nonzero)
 
 class HookModule(nn.Module):
     def __init__(self, device, name):
@@ -29,20 +36,55 @@ class HookModule(nn.Module):
         # a map from the weight name to weight id
         self._weight_nameids = OrderedDict()
 
-    def apply_weight_mask(self):
-        r"""
-        It's used for model pruning. The pruing weights are expressed by mask.
-        For a network forwarding, the weight must be multiplied with mask
-        """
-        def update_weights_before_forward(module, input):
-            # ignore bias parameter
-            if len(module._parameters) == 0:
-                return
-            weight = module._parameters['weight']
-            weight_mask = self._weight_mask[id(weight)][0]
-            weight.data = weight * weight_mask.to(self._device)
+        # pruing-related configure
+        self._pruning_init = None   # how to initialize the weights
+        self._pruning_op = None  # how to pruning network
+        self._check_point = None   # where to hold the state of network
 
-        self._register_preforward_hook(update_weights_before_forward)
+    def init_pruning_configure(self, **kwargs):
+        if 'init' in kwargs:
+            self._pruning_init = kwargs['init']
+        if 'init_kind' in kwargs:
+            self._pruning_init_kind = kwargs['init_kind']
+        if 'op' in kwargs:
+            self._pruning_op = kwargs['op']
+        if 'check_point' in kwargs:
+            self._check_point = kwargs['check_point']
+
+    def init_pruning_context(self, **kwargs):
+        self.init_pruning_configure(**kwargs)
+        self.init_weight_mask()
+
+    def reinitialize(self):
+        """re-initialize the weights of networks after pruning"""
+        if self._pruning_init == 'random':
+            self._random_init()
+        elif self._pruning_init == 'checkpoint':
+            self._last_state_init()
+
+    def _random_init(self, method='kaiming'):
+        r""" after pruning network, there is a need to initialize the weight of
+        the network. Here, the weights are initialized by the normal method for
+        neural networks
+
+        :param method: string, including kaiming and xavier
+        """
+        for name, param in self.named_parameters():
+            if 'weight' in name:
+                if self._pruning_init_kind == 'kaiming':
+                    nn.init.kaiming_uniform_(param.data, a=math.sqrt(5))
+                elif self._pruning_init_kind == 'xavier':
+                    nn.init.xavier_normal_(param.data)
+                else:
+                    raise NotImplementedError('not support {} initialization'.format(self._pruning_init_kind))
+
+    def _last_state_init(self):
+        r""" after pruning network, filling the weights from the last saved
+        checkpoint
+
+        :param filename: string, a disk state file
+        """
+        self.restore_state(self._check_point)
 
     def init_weight_mask(self):
         for name, param in self.named_parameters():
@@ -57,15 +99,7 @@ class HookModule(nn.Module):
 
         :param filename: string, representing the checkpoint file name
         """
-        weights_mask = OrderedDict()
-        for _, mask in self._weight_mask.items():
-            weights_mask.update({mask[1] : mask[0]})
-
-        state = {
-            'mask' : weights_mask,
-            'weight' : self.state_dict()
-        }
-        torch.save(state, filename)
+        torch.save(self.state_dict(), filename)
 
     def restore_state(self, filename):
         r""" For pruning algorithm, it's useful to restore the weights of network
@@ -76,11 +110,21 @@ class HookModule(nn.Module):
         """
         assert os.path.exists(filename), f'model file {filename} must exist'
         state = torch.load(filename)
-        self.load_state_dict(state['weight'])
+        self.load_state_dict(state)
 
-        for name, mask in state['mask'].items():
-            weight_id = self._weight_nameids[name]
-            self._weight_mask.update({weight_id : (mask, name)})
+    def pruning_network(self, q:float):
+        r""" choose one pruning method to compact the network, including `layer`
+        and global.
+        """"
+        if self._pruning_op == 'layer':
+            self.pruning_with_percentile(q)
+        elif self._pruning_op == 'global':
+            self.global_pruning(q)
+        else:
+            raise NotImplementedError("pruning {} method doesn't be supported")
+
+        # now reinitialize the weights of network
+        pass
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
@@ -93,7 +137,7 @@ class HookModule(nn.Module):
             It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
             """
             k = 1 + round(float(q) * (t.numel() - 1))
-            result = t.view(-1).abs().kthvalue(k).values.item()
+            result = t.abs().kthvalue(k).values.item()
             return result
 
         if len(self._weight_mask) == 0:
@@ -101,10 +145,32 @@ class HookModule(nn.Module):
         for name, param in self.named_parameters():
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)][0]
-            real_param = cpu_param * old_mask
-            percentile_value = percentile(real_param, q)
-            new_mask = torch.where(real_param.abs() < percentile_value,
+            percentile_value = percentile(tensor_nonzero(cpu_param), q)
+            new_mask = torch.where(cpu_param.abs() < percentile_value,
                                    torch.zeros_like(old_mask), old_mask)
+            self._weight_mask.update({id(param) : (new_mask, name)})
+
+    def global_pruning(self, q:float):
+        r""" For deep network, there are including different number of weights for
+        different module. To keep the less weights, there is a need to do pruning
+        on a global way.
+        """
+        if len(self._weight_mask) == 0:
+            return
+        # caculate the kth value for all weights of network
+        global_weights = torch.cat([param.abs().view(-1)
+                                    for name, param in self.named_parameters()
+                                    if 'weight' in name])
+        nonzero = tensor_nonzero(global_weights)
+        k = 1 + round(float(q) * (nonzero.numel() -1))
+        percentile_value = nonzero.abs().kthvalue(k).values.item()
+
+        for name, param in self.named_parameters():
+            cpu_param = param.cpu()
+            old_mask = self._weight_mask[id(param)][0]
+            new_mask = torch.where(cpu_param.abs() < percentile_value,
+                                   torch.zeros_like(old_mask),
+                                   old_mask)
             self._weight_mask.update({id(param) : (new_mask, name)})
 
     def _register_forward_hook(self, global_forward_fn=None):
