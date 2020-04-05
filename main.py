@@ -225,8 +225,10 @@ def main(args):
     log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
 
     # do the initialization for network pruning
-    model.apply_weight_mask()
-    model.init_weight_mask()
+    model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
+                               init_kind=setup['PRUNING']['INIT_KIND'],
+                               op=setup['PRUNING']['OPERATION'],
+                               check_point='{}/{}/{}.pruning'.format(HERE, setup['PRUNING']['DIR'], setup['MODEL']))
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 
