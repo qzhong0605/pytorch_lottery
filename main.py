@@ -35,7 +35,7 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
             for interval in pruning_interval:
                 if interval == cur_iter:
                     pruning_rate = setup['PRUNING']['COMPRESSION_RATE'][iter_idx]
-                    model.pruning_with_percentile(pruning_rate)
+                    model.pruning_network(pruning_rate)
                     break
                 iter_idx += 1
 
@@ -92,15 +92,16 @@ def test(args, model, device, test_loader, epoch, file_handler, setup):
     acc = 100. * correct / len(test_loader.dataset)
     if acc > best_acc:
         dataset = setup['DATASET']['NAME']
-        if not os.path.exists(f'checkpoint/{dataset}'):
-            os.makedirs(f'checkpoint/{dataset}')
+        model_name = setup['MODEL']
+        if not os.path.exists(f'checkpoint/{dataset}/{model_name}'):
+            os.makedirs(f'checkpoint/{dataset}/{model_name}')
         state = {
             'epoch' : epoch,
             'weights' : model.state_dict(),
             'acc' : acc
         }
-        torch.save(state, f'checkpoint/{dataset}/ckpt_{epoch}.pt')
-        print(f'============ save model as checkpoint/{dataset}/ckpt_{epoch}.pt ======================')
+        torch.save(state, f'checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt')
+        print(f'============ save model as checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt ======================')
         # update global accuracy
         best_acc = acc
 
@@ -225,10 +226,11 @@ def main(args):
     log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
 
     # do the initialization for network pruning
-    model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
-                               init_kind=setup['PRUNING']['INIT_KIND'],
-                               op=setup['PRUNING']['OPERATION'],
-                               check_point='{}/{}/{}.pruning'.format(HERE, setup['PRUNING']['DIR'], setup['MODEL']))
+    if 'PRUNING' in setup:
+        model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
+                                   init_kind=setup['PRUNING']['INIT_KIND'],
+                                   op=setup['PRUNING']['OPERATION'],
+                                   check_point='{}/{}/{}.pruning'.format(HERE, setup['PRUNING']['DIR'], setup['MODEL']))
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 

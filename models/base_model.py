@@ -16,7 +16,7 @@ import numpy as np
 
 def tensor_nonzero(t:torch.Tensor):
     """return an flattened tensor, which filled with nonzero elements"""
-    np_t = t.numpy()
+    np_t = t.data.numpy()
     nonzero = np_t[np_t.nonzero()]
     return torch.from_numpy(nonzero)
 
@@ -115,7 +115,7 @@ class HookModule(nn.Module):
     def pruning_network(self, q:float):
         r""" choose one pruning method to compact the network, including `layer`
         and global.
-        """"
+        """
         if self._pruning_op == 'layer':
             self.pruning_with_percentile(q)
         elif self._pruning_op == 'global':
@@ -124,7 +124,7 @@ class HookModule(nn.Module):
             raise NotImplementedError("pruning {} method doesn't be supported")
 
         # now reinitialize the weights of network
-        pass
+        self.reinitialize()
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
@@ -148,6 +148,7 @@ class HookModule(nn.Module):
             percentile_value = percentile(tensor_nonzero(cpu_param), q)
             new_mask = torch.where(cpu_param.abs() < percentile_value,
                                    torch.zeros_like(old_mask), old_mask)
+            param.data = param.data * new_mask.to(self._device)
             self._weight_mask.update({id(param) : (new_mask, name)})
 
     def global_pruning(self, q:float):
@@ -171,6 +172,7 @@ class HookModule(nn.Module):
             new_mask = torch.where(cpu_param.abs() < percentile_value,
                                    torch.zeros_like(old_mask),
                                    old_mask)
+            param.data = param.data * new_mask.to(self._device)
             self._weight_mask.update({id(param) : (new_mask, name)})
 
     def _register_forward_hook(self, global_forward_fn=None):
