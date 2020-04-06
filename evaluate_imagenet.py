@@ -2,6 +2,7 @@ import torch
 import argparse
 import time
 import re
+import numpy as np
 import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
@@ -24,6 +25,35 @@ parser.add_argument('--data', type=str, required=True, help='the dir for imagene
 parser.add_argument('-p', '--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 args = parser.parse_args()
+
+def mask_filter(weight:torch.Tensor, filters=[]):
+    """mask a list of `filter` dimension of weights and set them to zero"""
+    mask = torch.ones(weight.shape)
+    mask[::, filters] = 0.
+    old_data = weight.data.cpu()
+    new_data = old_data * mask
+    weight.data = new_data.to(weight.device)
+
+def mask_number(weight:torch.Tensor, numbers=[]):
+    """mask a list of `number` dimension of weights and set them to zero"""
+    mask = torch.ones(weight.shape)
+    mask[numbers] = 0.
+    old_data = weight.data.cpu()
+    new_data = old_data * mask
+    weight.data = new_data.to(weight.device)
+
+def mask_element(weight:torch.Tensor, elements=[]):
+    r"""mask a list of `elements` of weights and set them to zero
+
+    :param elements: a list of elements index. The index is a four-tuple data
+    """
+    mask = torch.ones(weight.shape)
+    for _element in elements:
+        mask[_element] = 0.
+    old_data = weight.data.cpu()
+    new_data = old_data * mask
+    weight.data = new_data.to(weight.device)
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
