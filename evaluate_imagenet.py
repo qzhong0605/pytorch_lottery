@@ -64,6 +64,12 @@ def count_zeros(weight:torch.Tensor):
     _temp = torch.where(weight.abs() < 1e-6, torch.ones(weight.shape), torch.zeros(weight.shape))
     return _temp.sum().item()
 
+def percentile(weight:torch.Tensor, q:float):
+    """return the `q`-th percentile of the abs function of input weight tensor"""
+    k = 1 + round(float(q) * (weight.numel() - 1))
+    result = weight.view(-1).abs().kthvalue(k).values.item()
+    return result
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
