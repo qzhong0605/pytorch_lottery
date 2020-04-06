@@ -1,6 +1,7 @@
 import torch
 import argparse
 import time
+import re
 import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
@@ -145,7 +146,21 @@ def main():
     model.to(device)
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
-    model.load_state_dict(torch.load(args.checkpoint))
+    state_dict = torch.load(args.checkpoint)
+    if args.arch.startswith('densenet'):
+        # '.'s are no longer allowed in module names, but previous _DenseLayer
+        # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
+        # They are also in the checkpoints in model_urls. This pattern is used
+        # to find such keys.
+        pattern = re.compile(
+            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+        for key in list(state_dict.keys()):
+            res = pattern.match(key)
+            if res:
+                new_key = res.group(1) + res.group(2)
+                state_dict[new_key] = state_dict[key]
+                del state_dict[key]
+    model.load_state_dict(state_dict)
     validate(val_loader, model, criterion, args)
 
 if __name__ == "__main__":
