@@ -54,6 +54,16 @@ def mask_element(weight:torch.Tensor, elements=[]):
     new_data = old_data * mask
     weight.data = new_data.to(weight.device)
 
+def mask_value(weight:torch.Tensor, thresh_value:float):
+    """mask the values less than `thresh_value` and set them to zero"""
+    weight.data = torch.where(weight.abs() < thresh_value,
+                              torch.zeros(weight.shape), weight.data)
+
+def count_zeros(weight:torch.Tensor):
+    """return the number of zeros"""
+    _temp = torch.where(weight.abs() < 1e-6, torch.ones(weight.shape), torch.zeros(weight.shape))
+    return _temp.sum().item()
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
