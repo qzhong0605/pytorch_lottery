@@ -70,6 +70,13 @@ def percentile(weight:torch.Tensor, q:float):
     result = weight.view(-1).abs().kthvalue(k).values.item()
     return result
 
+def percentile_nonzeros(weight:torch.Tensor, q:float):
+    """return the `q`-th percentile of the abs function of the nonzeros on input weight tensor"""
+    weight_np = weight.data.cpu().numpy()
+    weight_nonzero_np = weight_np[weight_np.nonzeros()]
+    new_weight = torch.from_numpy(weight_nonzero_np)
+    return percentile(new_weight, q)
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
