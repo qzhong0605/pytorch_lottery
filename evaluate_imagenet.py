@@ -73,7 +73,7 @@ def percentile(weight:torch.Tensor, q:float):
 def percentile_nonzeros(weight:torch.Tensor, q:float):
     """return the `q`-th percentile of the abs function of the nonzeros on input weight tensor"""
     weight_np = weight.data.cpu().numpy()
-    weight_nonzero_np = weight_np[weight_np.nonzeros()]
+    weight_nonzero_np = weight_np[weight_np.nonzero()]
     new_weight = torch.from_numpy(weight_nonzero_np)
     return percentile(new_weight, q)
 
@@ -184,14 +184,33 @@ def main():
         print('Use GPU: {}'.format(args.gpu))
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(args.data, transforms.Compose([
-            transforms.Resize(256), transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize
-        ])),
-        batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True
-    )
+    if args.arch == 'inception_v3':
+        val_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(args.data, transforms.Compose([
+                transforms.Resize(299), transforms.CenterCrop(299),
+                transforms.ToTensor(),
+                normalize
+            ])),
+            batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True
+        )
+    elif args.arch == 'googlenet':
+        val_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(args.data, transforms.Compose([
+                transforms.Resize(256), transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize
+            ])),
+            batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True
+        )
+    else:
+        val_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(args.data, transforms.Compose([
+                transforms.Resize(256), transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize
+            ])),
+            batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True
+        )
 
     device = torch.device('cpu')
     if args.gpu is not None:
