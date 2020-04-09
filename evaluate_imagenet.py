@@ -7,8 +7,13 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+from torch.nn.parameter import Parameter
 
 module_names = sorted(name for name in models.__dict__
+                     if name.islower() and not name.startswith('__')
+                     and callable(models.__dict__[name]))
+
+quant_module_names = sorted(name for name in models.quantization.__dict__
                      if name.islower() and not name.startswith('__')
                      and callable(models.__dict__[name]))
 
@@ -16,6 +21,8 @@ parser = argparse.ArgumentParser(description='evaluate models from torchvsion on
 parser.add_argument('-a', '--arch', default='resnet18', choices=module_names,
                     help='model architecture: ' +
                         ' | '.join(module_names) +
+                        ' and quantization architecture: ' +
+                        ' | '.join(quant_module_names) +
                         ' (default: resnet18)')
 parser.add_argument('-b', '--batch-size', default=64, type=int,
                     help='mini-batch size')
@@ -24,6 +31,13 @@ parser.add_argument('--gpu', type=int, default=0, help='the gpu id, where to run
 parser.add_argument('--data', type=str, required=True, help='the dir for imagenet dataset')
 parser.add_argument('-p', '--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
+parser.add_argument('-q', '--quantize', dest='quantize', action='store_true',
+                    help='use the quantized model')
+parser.add_argument('--skip-module', action='store_true',
+                    help='skip the whole module of network')
+# these weights are skipped to be loaded into network
+skip_weights = []
+
 args = parser.parse_args()
 
 def mask_filter(weight:torch.Tensor, filters=[]):
@@ -76,6 +90,21 @@ def percentile_nonzeros(weight:torch.Tensor, q:float):
     weight_nonzero_np = weight_np[weight_np.nonzero()]
     new_weight = torch.from_numpy(weight_nonzero_np)
     return percentile(new_weight, q)
+
+
+################################################################################
+#
+# skip torch module, whose input is the same with output tensor
+#
+################################################################################
+class SkipModule(nn.Module):
+    """It's a skip module, which does nothing."""
+    def __init__(self, skips=[]):
+        super(SkipModule, self).__init__()
+        skip_weights.extend(skips)
+
+    def forward(self, x):
+        return x
 
 
 class AverageMeter(object):
@@ -178,7 +207,10 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 def main():
-    model = models.__dict__[args.arch]()
+    if args.quantize:
+        model = models.quantization.__dict__[args.arch]()
+    else:
+        model = models.__dict__[args.arch]()
 
     if args.gpu is not None:
         print('Use GPU: {}'.format(args.gpu))
@@ -219,6 +251,10 @@ def main():
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
     state_dict = torch.load(args.checkpoint)
+    if args.skip_module:
+        for _weight_name in skip_weights:
+            state_dict.pop(_weight_name)
+
     if args.arch.startswith('densenet'):
         # '.'s are no longer allowed in module names, but previous _DenseLayer
         # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
