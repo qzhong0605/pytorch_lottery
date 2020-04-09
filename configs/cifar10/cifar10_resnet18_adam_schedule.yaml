@@ -1,11 +1,3 @@
-# pruing schedule is used to indicate when performing model compression 
-# and the pruning rate
-PRUNING: 
-    ITERATION: [10, 400, 100]
-    COMPRESSION_RATE: [0.5, 0.6, 0.7]
-    # after performing mask, how to initialize the remaining weights of network
-    INIT_TYPE: 'random'
-
 # where to run the model, including cuda and cpu
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
@@ -32,8 +24,8 @@ SOLVER:
     GAMMA: 0.1
     OPTIMIZER: 'adam'
     WEIGHT_DECAY: 0.001
-    STEP_SIZE: [150, 250] 
+    STEP_SIZE: [100, 150] 
     # the total number of iterations
-    TOTAL_EPOCHES: 350 
+    TOTAL_EPOCHES: 200 
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
