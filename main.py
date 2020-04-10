@@ -79,14 +79,14 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-def train(args, model, device, train_loader, optimizer, epoch, file_handler, setup):
+def train(args, model, device, train_loader, optimizer, epoch, file_handler, setup, criterion):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    acc = AverageMeter('Acc', ':6.2f')
+    avg_acc = AverageMeter('Acc', ':6.2f')
     progress = ProgressMeter(
         len(train_loader),
-        [batch_time, data_time, losses, acc],
+        [batch_time, data_time, losses, avg_acc],
         prefix="Epoch: [{}]".format(epoch))
 
     # switch to train mode
@@ -109,40 +109,40 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                     break
                 iter_idx += 1
 
+        # compute output and loss
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = criterion(output, target)
+        losses.update(loss.item(), data.size(0))
         loss.backward()
         optimizer.step()
+
+        # compute the accuracy
+        top1 = accuracy(output, target)
+        avg_acc.update(top1[0].item(), data.size(0))
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
         if batch_idx % args.log_interval == 0:
-            # track the time overhead
+            progress.display(batch_idx)
+            file_handler.write(f'{epoch},{batch_idx},{losses.avg},{avg_acc.avg}, {batch_time.avg}\n')
+
+            # update the start time
             end = time.time()
-
-            # track the training accuracy
-            pred = output.argmax(dim=1, keepdim=True)    # get the index of the max log-probability
-            correct = pred.eq(target.view_as(pred)).sum().item()
-
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\t Loss: {:.6f}\t Train Accuracy: {:.3f}%\t Time: {:.6f} s/iter'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item(),
-                100. * correct / len(data),
-                (end - start) * 1. / args.log_interval
-            ))
-            file_handler.write(f'{epoch},{batch_idx},{loss.item()},{correct* 1./len(data)}, {(end-start) * 1./args.log_interval}\n')
-
             # show weights sparisity for model
             # utils.show_sparsity_of_model(model)
-            start = time.time()
 
 
 def test(args, model, device, test_loader, epoch, file_handler, setup, criterion):
-    batch_time = AverageMeter('Time', ':6.3f')
+    batch_time = AverageMeter('DataLoad Time', ':6.3f')
+    eval_time = AverageMeter('Run Time:', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     avg_acc = AverageMeter('Acc', ':6.2f')
     progress = ProgressMeter(
         len(test_loader),
-        [batch_time, losses, avg_acc],
+        [batch_time, losses, avg_acc, eval_time],
         prefix='Test: ')
 
     # switch to evaluation mode
@@ -158,8 +158,10 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
             batch_time.update(time.time() - end)
 
             # compute output
+            eval_start = time.time()
             output = model(data)
             loss = criterion(output, target)
+            eval_time.update(time.time() - eval_start)
             losses.update(loss.item(), data.size(0))
 
             top1 = accuracy(output, target)
@@ -321,7 +323,7 @@ def main(args):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 
     for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
-        # train(args, model, device, train_loader, optimizer, epoch, log_handler, setup)
+        train(args, model, device, train_loader, optimizer, epoch, log_handler, setup, criterion)
         test(args, model, device, test_loader, epoch, log_handler, setup, criterion)
         log_handler.flush()
         scheduler.step()
