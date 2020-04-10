@@ -257,7 +257,7 @@ def main(args):
                                  transforms.ToTensor(),
                                  transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
                              ])),
-            batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=True, **kwargs
+            batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=False, **kwargs
         )
 
     device = torch.device('cuda:{}'.format(setup['DEVICE']['ID']) if use_cuda else 'cpu')
