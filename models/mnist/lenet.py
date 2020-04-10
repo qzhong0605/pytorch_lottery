@@ -30,8 +30,7 @@ class LeNet(base_model.HookModule):
         out = self.features(x)
         out = self.flatten(out)
         out = self.classifier(out)
-        output = F.log_softmax(out)
-        return output
+        return out
 
 def build_lenet(device):
     return LeNet(device, 'lenet').to(device)

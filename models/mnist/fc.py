@@ -17,7 +17,6 @@ class FC(base_model.HookModule):
 
     def forward(self,x):
         out = self.features(x)
-        output = F.log_softmax(out)
         return output
 
 

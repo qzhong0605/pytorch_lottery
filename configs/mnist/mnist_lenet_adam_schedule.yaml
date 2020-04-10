@@ -2,7 +2,7 @@
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    IDS: [0]
+    ID: 1
 
 # input dataset
 DATASET:
