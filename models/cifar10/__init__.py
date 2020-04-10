@@ -1,6 +1,7 @@
 from models.cifar10 import resnet
 from models.cifar10 import mobilenet
 from models.cifar10 import mobilenetv2
+from models.cifar10 import densenet
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -12,5 +13,10 @@ __model__ = {
 
     'mobilenet' : mobilenet.build_mobilenet,
     'mobilenetv2' : mobilenetv2.build_mobilenetv2,
+
+    'densenet121': densenet.build_densenet121,
+    'densenet161': densenet.build_densenet161,
+    'densenet169': densenet.build_densenet169,
+    'densenet201': densenet.build_densenet201
 }
 

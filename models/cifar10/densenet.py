@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models import base_model
+
 
 class Bottleneck(nn.Module):
     def __init__(self, in_planes, growth_rate):
@@ -33,9 +35,9 @@ class Transition(nn.Module):
         return out
 
 
-class DenseNet(nn.Module):
-    def __init__(self, block, nblocks, growth_rate=12, reduction=0.5, num_classes=10):
-        super(DenseNet, self).__init__()
+class DenseNet(base_model.HookModule):
+    def __init__(self, block, device, name, nblocks, growth_rate=12, reduction=0.5, num_classes=10):
+        super(DenseNet, self).__init__(device, name)
         self.growth_rate = growth_rate
 
         num_planes = 2*growth_rate
@@ -83,25 +85,14 @@ class DenseNet(nn.Module):
         out = self.linear(out)
         return out
 
-def DenseNet121():
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32)
+def build_densenet121(device):
+    return DenseNet(Bottleneck, device, 'densenet121', [6,12,24,16], growth_rate=32).to(device)
 
-def DenseNet169():
-    return DenseNet(Bottleneck, [6,12,32,32], growth_rate=32)
+def build_densenet169(device):
+    return DenseNet(Bottleneck, device, 'densenet169', [6,12,32,32], growth_rate=32).to(device)
 
-def DenseNet201():
-    return DenseNet(Bottleneck, [6,12,48,32], growth_rate=32)
+def build_densenet201(device):
+    return DenseNet(Bottleneck, device, 'densenet201', [6,12,48,32], growth_rate=32).to(device)
 
-def DenseNet161():
-    return DenseNet(Bottleneck, [6,12,36,24], growth_rate=48)
-
-def densenet_cifar():
-    return DenseNet(Bottleneck, [6,12,24,16], growth_rate=12)
-
-def test():
-    net = densenet_cifar()
-    x = torch.randn(1,3,32,32)
-    y = net(x)
-    print(y)
-
-# test()
+def build_densenet161(device):
+    return DenseNet(Bottleneck, device, 'densenet161', [6,12,36,24], growth_rate=48)
