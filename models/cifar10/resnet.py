@@ -105,7 +105,6 @@ class ResNet(base_model.HookModule):
         out = self.flatten(out)
         out = self.linear(out)
 
-        out = F.log_softmax(out)
         return out
 
 
