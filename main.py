@@ -7,6 +7,7 @@ import argparse
 import yaml
 from torch import optim
 import torch.nn.functional as F
+import torch.nn as nn
 from torch.optim.lr_scheduler import StepLR
 from torch.optim.lr_scheduler import MultiStepLR
 
@@ -22,11 +23,80 @@ best_acc = 0
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+class ProgressMeter(object):
+    def __init__(self, num_batches, meters, prefix=""):
+        self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
+        self.meters = meters
+        self.prefix = prefix
+
+    def display(self, batch):
+        entries = [self.prefix + self.batch_fmtstr.format(batch)]
+        entries += [str(meter) for meter in self.meters]
+        print('\t'.join(entries))
+
+    def _get_batch_fmtstr(self, num_batches):
+        num_digits = len(str(num_batches // 1))
+        fmt = '{:' + str(num_digits) + 'd}'
+        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self, name, fmt=':f'):
+        self.name = name
+        self.fmt = fmt
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+    def __str__(self):
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        return fmtstr.format(**self.__dict__)
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the accuracy over the k top predictions for the specified values of k"""
+    with torch.no_grad():
+        maxk = max(topk)
+        batch_size = target.size(0)
+
+        _, pred = output.topk(maxk, 1, True, True)
+        pred = pred.t()
+        correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+        res = []
+        for k in topk:
+            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+            res.append(correct_k.mul_(100.0 / batch_size))
+        return res
+
+
 def train(args, model, device, train_loader, optimizer, epoch, file_handler, setup):
+    batch_time = AverageMeter('Time', ':6.3f')
+    data_time = AverageMeter('Data', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    acc = AverageMeter('Acc', ':6.2f')
+    progress = ProgressMeter(
+        len(train_loader),
+        [batch_time, data_time, losses, acc],
+        prefix="Epoch: [{}]".format(epoch))
+
+    # switch to train mode
     model.train()
 
-    start = time.time()
+    end = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
+        # measure the data load time
+        data_time.update(time.time() - end)
+
         if 'PRUNING' in setup:
             # perform the network pruning if on the pruning interval
             cur_iter = epoch * len(train_loader) + batch_idx
@@ -66,31 +136,43 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
             start = time.time()
 
 
-def test(args, model, device, test_loader, epoch, file_handler, setup):
+def test(args, model, device, test_loader, epoch, file_handler, setup, criterion):
+    batch_time = AverageMeter('Time', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    avg_acc = AverageMeter('Acc', ':6.2f')
+    progress = ProgressMeter(
+        len(test_loader),
+        [batch_time, losses, avg_acc],
+        prefix='Test: ')
+
+    # switch to evaluation mode
     model.eval()
     global best_acc
 
-    test_loss = 0
-    correct = 0
-
     with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            correct += pred.eq(target.view_as(pred)).sum().item()
+        end = time.time()
 
-    test_loss /= len(test_loader.dataset)
-    print('\n Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.3f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)
-    ))
-    file_handler.write(f'Test {epoch}, {test_loss}, {correct* 1./len(test_loader.dataset)}\n')
+        for i, (data, target) in enumerate(test_loader):
+            data, target = data.to(device), target.to(device)
+            # measure the elapsed time for data load
+            batch_time.update(time.time() - end)
+
+            # compute output
+            output = model(data)
+            loss = criterion(output, target)
+            losses.update(loss.item(), data.size(0))
+
+            top1 = accuracy(output, target)
+            avg_acc.update(top1[0].item(), data.size(0))
+
+            if i % args.log_interval == 0:
+                progress.display(i)
+                end = time.time()
+
+    file_handler.write(f'Test {epoch}, {losses.avg}, {avg_acc.avg}\n')
 
     # save checkpoint
-    acc = 100. * correct / len(test_loader.dataset)
-    if acc > best_acc:
+    if avg_acc.avg > best_acc:
         dataset = setup['DATASET']['NAME']
         model_name = setup['MODEL']
         if not os.path.exists(f'checkpoint/{dataset}/{model_name}'):
@@ -98,12 +180,12 @@ def test(args, model, device, test_loader, epoch, file_handler, setup):
         state = {
             'epoch' : epoch,
             'weights' : model.state_dict(),
-            'acc' : acc
+            'acc' : avg_acc.avg
         }
         torch.save(state, f'checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt')
         print(f'============ save model as checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt ======================')
         # update global accuracy
-        best_acc = acc
+        best_acc = avg_acc.avg
 
 
 def get_target_model(dataset_name, model_name, device):
@@ -173,8 +255,12 @@ def main(args):
             batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=True, **kwargs
         )
 
-    device = torch.device('cuda' if use_cuda else 'cpu')
+    device = torch.device('cuda:{}'.format(setup['DEVICE']['ID']) if use_cuda else 'cpu')
     model = get_target_model(dataset, model_name, device)
+
+    # define loss function
+    criterion = nn.CrossEntropyLoss().to(device)
+
     # show the weight details for model
     if args.verbose:
         utils.show_details_of_module(model)
@@ -235,8 +321,8 @@ def main(args):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 
     for epoch in range(start_epoch, start_epoch + setup['SOLVER']['TOTAL_EPOCHES']):
-        train(args, model, device, train_loader, optimizer, epoch, log_handler, setup)
-        test(args, model, device, test_loader, epoch, log_handler, setup)
+        # train(args, model, device, train_loader, optimizer, epoch, log_handler, setup)
+        test(args, model, device, test_loader, epoch, log_handler, setup, criterion)
         log_handler.flush()
         scheduler.step()
     log_handler.close()
