@@ -259,6 +259,25 @@ def main(args):
                              ])),
             batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=False, **kwargs
         )
+    elif dataset == 'cifar100':
+        train_loader = torch.utils.data.DataLoader(
+            datasets.CIFAR100(setup['DATASET']['DIR'], train=True, download=True,
+                             transform=transforms.Compose([
+                                 transforms.RandomCrop(32, padding=4),
+                                 transforms.RandomHorizontalFlip(),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                             ])),
+            batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
+        )
+        test_loader = torch.utils.data.DataLoader(
+            datasets.CIFAR100(setup['DATASET']['DIR'], train=False, download=True,
+                             transform=transforms.Compose([
+                                 transforms.ToTensor(),
+                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                             ])),
+            batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=False, **kwargs
+        )
 
     device = torch.device('cuda:{}'.format(setup['DEVICE']['ID']) if use_cuda else 'cpu')
     model = get_target_model(dataset, model_name, device)
