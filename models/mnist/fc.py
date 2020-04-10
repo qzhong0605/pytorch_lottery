@@ -17,7 +17,7 @@ class FC(base_model.HookModule):
 
     def forward(self,x):
         out = self.features(x)
-        return output
+        return out
 
 
 def build_fc(device):
