@@ -2,7 +2,7 @@
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    IDS: [0]
+    ID: 0
 
 # input dataset
 DATASET:
@@ -23,7 +23,7 @@ SOLVER:
     LR: 0.1
     GAMMA: 0.1
     OPTIMIZER: 'adam'
-    WEIGHT_DECAY: 0.001
+    WEIGHT_DECAY: 0.0001
     STEP_SIZE: [100, 150] 
     # the total number of iterations
     TOTAL_EPOCHES: 200 
