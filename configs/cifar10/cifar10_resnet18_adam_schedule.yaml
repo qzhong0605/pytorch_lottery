@@ -22,10 +22,11 @@ MODEL: 'resnet18'
 SOLVER:
     LR: 0.1
     GAMMA: 0.1
-    OPTIMIZER: 'adam'
+    OPTIMIZER: 'sgd'
     WEIGHT_DECAY: 0.0005
     STEP_SIZE: [100, 150] 
     # the total number of iterations
     TOTAL_EPOCHES: 200 
+    MOMENTUM: 0.9
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
