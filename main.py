@@ -95,6 +95,7 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
     end = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
         # measure the data load time
+        data, target = data.to(device), target.to(device)
         data_time.update(time.time() - end)
 
         if 'PRUNING' in setup:
@@ -110,7 +111,6 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                 iter_idx += 1
 
         # compute output and loss
-        data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -136,13 +136,13 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
 
 
 def test(args, model, device, test_loader, epoch, file_handler, setup, criterion):
-    batch_time = AverageMeter('DataLoad Time', ':6.3f')
-    eval_time = AverageMeter('Run Time:', ':6.3f')
+    batch_time = AverageMeter('Time', ':6.3f')
+    data_time = AverageMeter('Data:', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     avg_acc = AverageMeter('Acc', ':6.2f')
     progress = ProgressMeter(
         len(test_loader),
-        [batch_time, losses, avg_acc, eval_time],
+        [batch_time, data_time, losses, avg_acc],
         prefix='Test: ')
 
     # switch to evaluation mode
@@ -153,22 +153,25 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
         end = time.time()
 
         for i, (data, target) in enumerate(test_loader):
-            data, target = data.to(device), target.to(device)
             # measure the elapsed time for data load
-            batch_time.update(time.time() - end)
+            data, target = data.to(device), target.to(device)
+            data_time.update(time.time() - end)
 
             # compute output
-            eval_start = time.time()
             output = model(data)
             loss = criterion(output, target)
-            eval_time.update(time.time() - eval_start)
             losses.update(loss.item(), data.size(0))
 
             top1 = accuracy(output, target)
             avg_acc.update(top1[0].item(), data.size(0))
 
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
             if i % args.log_interval == 0:
                 progress.display(i)
+                # update the start time, ignoring the time for output
                 end = time.time()
 
     file_handler.write(f'Test {epoch}, {losses.avg}, {avg_acc.avg}\n')
