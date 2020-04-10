@@ -84,7 +84,7 @@ class MobileNetV2(base_model.HookModule):
 
         # NOTE: change pooling kernel_size 7 -> 4 for CIFAR10
         out = self.classifier(out)
-        return F.log_softmax(out)
+        return out
 
 
 def build_mobilenetv2(device):

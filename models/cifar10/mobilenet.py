@@ -59,7 +59,7 @@ class MobileNet(base_model.HookModule):
         out = self.preprocess(x)
         out = self.layers(out)
         out = self.classifier(out)
-        return F.log_softmax(out)
+        return out
 
 def build_mobilenet(device):
     return MobileNet(device, 'mobilenet').to(device)
