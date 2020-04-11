@@ -16,7 +16,7 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'resnet18'
+MODEL: 'densenet121'
 
 # hyper-paramters for training model
 SOLVER:
