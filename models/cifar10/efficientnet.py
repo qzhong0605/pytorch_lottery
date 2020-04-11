@@ -106,7 +106,7 @@ class Block(nn.Module):
 
 class EfficientNet(base_model.HookModule):
     def __init__(self, cfg, device, name, num_classes=10):
-        super(EfficientNet, self).__init__()
+        super(EfficientNet, self).__init__(device, name)
         self.cfg = cfg
         self.conv1 = nn.Conv2d(3,
                                32,
@@ -153,4 +153,4 @@ def build_efficientnetb0(device):
         'kernel_size': [3, 3, 5, 3, 5, 5, 3],
         'stride': [1, 2, 2, 2, 1, 2, 1],
     }
-    return EfficientNet(cfg, device, 'efficientnetb0')
+    return EfficientNet(cfg, device, 'efficientnetb0').to(device)

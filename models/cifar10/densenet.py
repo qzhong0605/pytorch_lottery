@@ -95,4 +95,4 @@ def build_densenet201(device):
     return DenseNet(Bottleneck, device, 'densenet201', [6,12,48,32], growth_rate=32).to(device)
 
 def build_densenet161(device):
-    return DenseNet(Bottleneck, device, 'densenet161', [6,12,36,24], growth_rate=48)
+    return DenseNet(Bottleneck, device, 'densenet161', [6,12,36,24], growth_rate=48).to(device)
