@@ -3,6 +3,7 @@ from models.cifar10 import mobilenet
 from models.cifar10 import mobilenetv2
 from models.cifar10 import densenet
 from models.cifar10 import efficientnet
+from models.cifar10 import regnet
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -21,5 +22,6 @@ __model__ = {
     'densenet201': densenet.build_densenet201,
 
     'efficientnetb0': efficientnet.build_efficientnetb0,
+    'regnetx_200mf': regnet.build_regnetx_200mf,
 }
 

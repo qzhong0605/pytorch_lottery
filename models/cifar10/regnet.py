@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models import base_model
+
 
 class BlockX(nn.Module):
     def __init__(self, w_in, w_out, stride, bottleneck_ratio, num_groups):
@@ -42,9 +44,9 @@ class BlockX(nn.Module):
         return out
 
 
-class RegNet(nn.Module):
-    def __init__(self, cfg, num_classes=10):
-        super(RegNet, self).__init__()
+class RegNet(base_model.HookModule):
+    def __init__(self, cfg, device, name, num_classes=10):
+        super(RegNet, self).__init__(device, name)
         self.cfg = cfg
         self.in_planes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
@@ -83,7 +85,7 @@ class RegNet(nn.Module):
         return out
 
 
-def RegNetX_200MF():
+def build_regnetx_200mf(device):
     cfg = {
         'depths': [1, 1, 4, 7],
         'widths': [24, 56, 152, 368],
@@ -91,4 +93,4 @@ def RegNetX_200MF():
         'num_groups': 8,
         'bottleneck_ratio': 1,
     }
-    return RegNet(cfg)
+    return RegNet(cfg, device, 'regnetx_200mf').to(device)
