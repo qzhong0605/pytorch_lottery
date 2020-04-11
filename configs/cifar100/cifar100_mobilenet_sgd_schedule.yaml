@@ -23,7 +23,7 @@ SOLVER:
     LR: 0.1
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
-    WEIGHT_DECAY: 0.0001
+    WEIGHT_DECAY: 0.0005
     STEP_SIZE: [100, 150] 
     MOMENTUM: 0.9
     # the total number of iterations
