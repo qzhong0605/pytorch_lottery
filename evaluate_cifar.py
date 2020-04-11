@@ -61,12 +61,15 @@ def mask_element(weight:torch.Tensor, elements=[]):
 
 def mask_value(weight:torch.Tensor, thresh_value:float):
     """mask the values less than `thresh_value` and set them to zero"""
-    weight.data = torch.where(weight.abs() < thresh_value,
-                              torch.zeros(weight.shape), weight.data)
+    old_data = weight.data.cpu()
+    new_data = torch.where(old_data.abs() < thresh_value,
+                              torch.zeros(old_data.shape), old_data)
+    weight.data = new_data.to(weight.device)
 
 def count_zeros(weight:torch.Tensor):
     """return the number of zeros"""
-    _temp = torch.where(weight.abs() < 1e-6, torch.ones(weight.shape), torch.zeros(weight.shape))
+    cpu_data = weight.cpu()
+    _temp = torch.where(cpu_data.abs() < 1e-6, torch.ones(cpu_data.shape), torch.zeros(cpu_data.shape))
     return _temp.sum().item()
 
 def percentile(weight:torch.Tensor, q:float):
