@@ -66,6 +66,11 @@ def mask_value(weight:torch.Tensor, thresh_value:float):
                               torch.zeros(old_data.shape), old_data)
     weight.data = new_data.to(weight.device)
 
+def global_mask_value(tensors:list, thresh_value:float):
+    """mask the values on tensors less than `thresh_value` and set them to zero"""
+    for tensor in tensors:
+        mask_value(tensor, thresh_value)
+
 def count_zeros(weight:torch.Tensor):
     """return the number of zeros"""
     cpu_data = weight.cpu()
@@ -84,6 +89,16 @@ def percentile_nonzeros(weight:torch.Tensor, q:float):
     weight_nonzero_np = weight_np[weight_np.nonzero()]
     new_weight = torch.from_numpy(weight_nonzero_np)
     return percentile(new_weight, q)
+
+def global_percentile(tensors:list, q:float):
+    """return the `q`-th percentile of the tensors in the list"""
+    cat_res = torch.cat([tensor.cpu().view(-1) for tensor in tensors])
+    return percentile(cat_res, q)
+
+def global_percentile_nonzeros(tensors:list, q:float):
+    """return the `q`-th percentile of the abs function of the nonzeros on input list of tensor"""
+    cat_res = torch.cat([tensor.cpu().view(-1) for tensor in tensors])
+    return percentile_nonzeros(cat_res, q)
 
 
 ################################################################################
