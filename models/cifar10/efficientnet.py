@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models import base_model
+
 
 def swish(x):
     return x * x.sigmoid()
@@ -102,8 +104,8 @@ class Block(nn.Module):
         return out
 
 
-class EfficientNet(nn.Module):
-    def __init__(self, cfg, num_classes=10):
+class EfficientNet(base_model.HookModule):
+    def __init__(self, cfg, device, name, num_classes=10):
         super(EfficientNet, self).__init__()
         self.cfg = cfg
         self.conv1 = nn.Conv2d(3,
@@ -143,7 +145,7 @@ class EfficientNet(nn.Module):
         return out
 
 
-def EfficientNetB0():
+def build_efficientnetb0(device):
     cfg = {
         'num_blocks': [1, 2, 2, 3, 3, 4, 1],
         'expansion': [1, 6, 6, 6, 6, 6, 6],
@@ -151,4 +153,4 @@ def EfficientNetB0():
         'kernel_size': [3, 3, 5, 3, 5, 5, 3],
         'stride': [1, 2, 2, 2, 1, 2, 1],
     }
-    return EfficientNet(cfg)
+    return EfficientNet(cfg, device, 'efficientnetb0')
