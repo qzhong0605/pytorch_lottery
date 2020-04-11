@@ -180,15 +180,24 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
     if avg_acc.avg > best_acc:
         dataset = setup['DATASET']['NAME']
         model_name = setup['MODEL']
-        if not os.path.exists(f'checkpoint/{dataset}/{model_name}'):
-            os.makedirs(f'checkpoint/{dataset}/{model_name}')
+        if 'PRUNING' in setup:
+            if not os.path.exists(f'checkpoint/{dataset}/{model_name}_pruning'):
+                os.makedirs(f'checkpoint/{dataset}/{model_name}_pruning')
+        else:
+            if not os.path.exists(f'checkpoint/{dataset}/{model_name}'):
+                os.makedirs(f'checkpoint/{dataset}/{model_name}')
+
         state = {
             'epoch' : epoch,
             'weights' : model.state_dict(),
             'acc' : avg_acc.avg
         }
-        torch.save(state, f'checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt')
-        print(f'============ save model as checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt ======================')
+        if 'PRUNING' in setup:
+            torch.save(state, f'checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt')
+            print(f'============ save model as checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt ======================')
+        else:
+            torch.save(state, f'checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt')
+            print(f'============ save model as checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt ======================')
         # update global accuracy
         best_acc = avg_acc.avg
 
@@ -331,9 +340,14 @@ def main(args):
                                 gamma=setup['SOLVER']['GAMMA'])
 
     # write experiments to log
-    if not os.path.exists(f'experiments/{dataset}/{model_name}'):
-        os.makedirs(f'experiments/{dataset}/{model_name}')
-    log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
+    if 'PRUNING' in setup:
+        if not os.path.exists(f'experiments/{dataset}/{model_name}_pruning'):
+            os.makedirs(f'experiments/{dataset}/{model_name}_pruning')
+        log_handler = open(f'experiments/{dataset}/{model_name}_pruning/{time.time()}.log', 'w')
+    else:
+        if not os.path.exists(f'experiments/{dataset}/{model_name}'):
+            os.makedirs(f'experiments/{dataset}/{model_name}')
+        log_handler = open(f'experiments/{dataset}/{model_name}/{time.time()}.log', 'w')
 
     # do the initialization for network pruning
     if 'PRUNING' in setup:
