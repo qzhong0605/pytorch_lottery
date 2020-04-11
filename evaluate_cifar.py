@@ -77,6 +77,13 @@ def count_zeros(weight:torch.Tensor):
     _temp = torch.where(cpu_data.abs() < 1e-6, torch.ones(cpu_data.shape), torch.zeros(cpu_data.shape))
     return _temp.sum().item()
 
+def global_count_zeros(tensors:list):
+    """return the number of zeros for input list"""
+    res = 0
+    for tensor in tensors:
+        res += count_zeros(tensor)
+    return res
+
 def percentile(weight:torch.Tensor, q:float):
     """return the `q`-th percentile of the abs function of input weight tensor"""
     k = 1 + round(float(q) * (weight.numel() - 1))
