@@ -239,7 +239,8 @@ def main():
         for _weight_name in skip_weights:
             state_dict.pop(_weight_name)
 
-    model.load_state_dict(state_dict['weights'])
+    model_state = state_dict['weights']
+    model.load_state_dict(model_state)
     validate(val_loader, model, criterion, device)
 
 if __name__ == "__main__":
