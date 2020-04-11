@@ -254,6 +254,15 @@ def main():
                              ])),
             batch_size=args.batch_size, shuffle=False
         )
+    elif args.dataset == 'mnist':
+        val_loader = torch.utils.data.DataLoader(
+            datasets.MNIST(args.data_dir, train=False, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize([0.1307], [0.3081])
+                           ])),
+            batch_size=args.batch_size, shuffle=False
+        )
 
     criterion = nn.CrossEntropyLoss().to(device)
 
