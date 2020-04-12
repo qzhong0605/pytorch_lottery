@@ -13,12 +13,18 @@ from models import session, manager, checker
 import hook
 import numpy as np
 
-
 def tensor_nonzero(t:torch.Tensor):
     """return an flattened tensor, which filled with nonzero elements"""
     np_t = t.data.numpy()
     nonzero = np_t[np_t.nonzero()]
     return torch.from_numpy(nonzero)
+
+def count_zeros(t:torch.Tensor):
+    """return the number of zeros for the input tensor"""
+    cpu_t = t.cpu()
+    num_zeros = torch.where(cpu_t.abs() < 1e-6, torch.ones(cpu_t.shape), torch.zeros(cpu_t.shape))
+    return num_zeros.sum().item()
+
 
 class HookModule(nn.Module):
     def __init__(self, device, name):
