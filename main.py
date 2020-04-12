@@ -107,6 +107,10 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                 if interval == cur_iter:
                     pruning_rate = setup['PRUNING']['COMPRESSION_RATE'][iter_idx]
                     model.pruning_network(pruning_rate)
+                    # update the optimizer
+                    optimizer = optim.Adam(model.parameters(),
+                                           lr=setup['SOLVER']['LR'],
+                                           weight_decay=setup['SOLVER']['WEIGHT_DECAY'])
                     break
                 iter_idx += 1
 
