@@ -25,6 +25,14 @@ def count_zeros(t:torch.Tensor):
     num_zeros = torch.where(cpu_t.abs() < 1e-6, torch.ones(cpu_t.shape), torch.zeros(cpu_t.shape))
     return num_zeros.sum().item()
 
+def percentile(t: torch.Tensor, q: float) -> Union[int, float]:
+    r""" Return the ``q``-th percentile of the flattened input tensor's data
+    It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
+    """
+    k = 1 + round(float(q) * (t.numel() - 1))
+    result = t.abs().kthvalue(k).values.item()
+    return result
+
 
 class HookModule(nn.Module):
     def __init__(self, device, name):
@@ -83,6 +91,9 @@ class HookModule(nn.Module):
                     nn.init.xavier_normal_(param.data)
                 else:
                     raise NotImplementedError('not support {} initialization'.format(self._pruning_init_kind))
+                # update the parameter data with mask
+                weight_mask = self._weight_mask[id(param)][0]
+                param.data = param.data * weight_mask.to(self._device)
 
     def _last_state_init(self):
         r""" after pruning network, filling the weights from the last saved
@@ -91,6 +102,11 @@ class HookModule(nn.Module):
         :param filename: string, a disk state file
         """
         self.restore_state(self._check_point)
+        for name, param in self.named_parameters():
+            if 'weight' in name:
+                # update the parameter data with mask
+                weight_mask = self._weight_mask[id(param)][0]
+                param.data = param.data * weight_mask.to(self._device)
 
     def init_weight_mask(self):
         for name, param in self.named_parameters():
@@ -138,17 +154,12 @@ class HookModule(nn.Module):
 
         :param q: float, a percent float. It must be between 0 and 1 inclusive
         """
-        def percentile(t: torch.Tensor, q: float) -> Union[int, float]:
-            r""" Return the ``q``-th percentile of the flattened input tensor's data
-            It's based on https://gist.github.com/spezold/42a451682422beb42bc43ad0c0967a30
-            """
-            k = 1 + round(float(q) * (t.numel() - 1))
-            result = t.abs().kthvalue(k).values.item()
-            return result
-
         if len(self._weight_mask) == 0:
             return
         for name, param in self.named_parameters():
+            if 'weight' not in name:
+                # skip the other type weights
+                continue
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)][0]
             percentile_value = percentile(tensor_nonzero(cpu_param), q)
@@ -168,11 +179,12 @@ class HookModule(nn.Module):
         global_weights = torch.cat([param.abs().view(-1)
                                     for name, param in self.named_parameters()
                                     if 'weight' in name])
-        nonzero = tensor_nonzero(global_weights)
-        k = 1 + round(float(q) * (nonzero.numel() -1))
-        percentile_value = nonzero.abs().kthvalue(k).values.item()
+        percentile_value = percentile(tensor_nonzero(global_weights), q)
 
         for name, param in self.named_parameters():
+            if 'weight' not in name:
+                # skip the other type weights
+                continue
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)][0]
             new_mask = torch.where(cpu_param.abs() < percentile_value,
