@@ -75,6 +75,11 @@ class HookModule(nn.Module):
             self._random_init()
         elif self._pruning_init == 'checkpoint':
             self._last_state_init()
+        elif self._pruning_init == 'same':
+            # keep the remaining weights to be same with the last
+            pass
+        else:
+            raise NotImplementedError(f'{self._pruning_init} initialization not support yet')
 
     def _random_init(self, method='kaiming'):
         r""" after pruning network, there is a need to initialize the weight of

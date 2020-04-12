@@ -27,6 +27,6 @@ SOLVER:
     STEP_SIZE: [100, 150] 
     MOMENTUM: 0.9
     # the total number of iterations
-    TOTAL_EPOCHES: 200 
+    TOTAL_EPOCHES: 200
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'

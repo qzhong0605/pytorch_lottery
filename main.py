@@ -110,6 +110,9 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                     break
                 iter_idx += 1
 
+            # update the start time
+            end = time.time()
+
         # compute output and loss
         optimizer.zero_grad()
         output = model(data)
@@ -127,7 +130,7 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
         end = time.time()
         if batch_idx % args.log_interval == 0:
             progress.display(batch_idx)
-            file_handler.write(f'{epoch},{batch_idx},{losses.avg},{avg_acc.avg}, {batch_time.avg}\n')
+            file_handler.write(f'{epoch},{batch_idx},{losses.avg},{avg_acc.val}, {avg_acc.avg}, {batch_time.avg}\n')
 
             # update the start time
             end = time.time()
