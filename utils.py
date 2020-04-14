@@ -69,7 +69,11 @@ def backtrace_modules(session_id):
     print(f"""===================== Running {session.number_of_running_modules()} module =========================""")
     for idx in range(session.number_of_running_modules()):
         running_module = session.index_module(idx)
-        print(f"""module {idx}: {running_module[0]}""")
+        if idx < session.number_of_fp_modules():
+            print(f"""module {idx}: {running_module[0]}""")
+        else:
+            print(f"""[bp - {2*session.number_of_fp_modules() - idx - 1}] module {idx}: {running_module[0]}""")
+
         if type(running_module[1][0]) == tuple:
             input_tensor = '\tInput:'
             for __input__ in running_module[1][0]:

@@ -107,27 +107,28 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                 if interval == cur_iter:
                     pruning_rate = setup['PRUNING']['COMPRESSION_RATE'][iter_idx]
                     model.pruning_network(pruning_rate)
+
                     # update the optimizer
-                    optimizer = optim.Adam(model.parameters(),
-                                           lr=setup['SOLVER']['LR'],
-                                           weight_decay=setup['SOLVER']['WEIGHT_DECAY'])
+                    optimizer = optim.SGD(model.parameters(), lr=setup['SOLVER']['LR'],
+                                          weight_decay=setup['SOLVER']['WEIGHT_DECAY'],
+                                          momentum=setup['SOLVER']['MOMENTUM'])
                     break
                 iter_idx += 1
 
             # update the start time
             end = time.time()
 
-        # compute output and loss
-        optimizer.zero_grad()
+        # compute output, loss and accuracy
         output = model(data)
         loss = criterion(output, target)
         losses.update(loss.item(), data.size(0))
-        loss.backward()
-        optimizer.step()
-
-        # compute the accuracy
         top1 = accuracy(output, target)
         avg_acc.update(top1[0].item(), data.size(0))
+
+        # compuate gradient and do updating
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -313,7 +314,7 @@ def main(args):
     if args.model_debug:
         model.set_trace()
     elif args.module_debug:
-        model.trace_module(args.module)
+        model.trace_module(args.module, args.bp_debug)
 
     start_epoch = 0
     # resume from the previous saved checkpoint
@@ -385,6 +386,8 @@ def init_args():
                         help='used to trace all the module')
     parser.add_argument('--module-debug', action='store_true', default=False,
                         help='used to trace a specified type of module')
+    parser.add_argument('--bp-debug', action='store_true', default=False,
+                        help='used to trace and debug back progpagation')
     parser.add_argument('--module', type=str,
                         help='the target module type name')
     parser.add_argument('--config', type=str, required=True,

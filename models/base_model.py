@@ -308,32 +308,45 @@ class HookModule(nn.Module):
         register an hook to cleanup all running modules. It's performed after
         forward of network
         """
-        def cleanup_running_modules(module, input, output):
+        def cleanup_running_modules(module, input):
             self._session.clear_running_modules()
-        self.register_forward_hook(cleanup_running_modules)
+        self.register_forward_pre_hook(cleanup_running_modules)
 
-    def trace_module(self, module_type):
+    def trace_module(self, module_type, trace_bp=False):
         """ set trace on the specified module
 
         For torch framworks, its network is constructed dynamicly. Therefore,
-        the traced running modules are cleaned up after an forward pass
+        the traced running modules are cleaned up after a forward pass
+
+        If we want to trace the bp procedure of network training, the traced
+        running modules alse include a fake module, which represents an bp module
+        At this time, the running modules would be cleaned up after a backward pass
 
         Args:
             module_type: a string representing module type
+            trace_bp: a bool. The default beheavior is to ignore the backward pass
         """
         self.register_cleanup_running_modules()
-        def register_active_module(module, input, output):
+        def register_active_fp_module(module, input, output):
             r"""
             register an active module into current session
             """
-            self._session.add_module(module, input, output)
+            self._session.add_fp_module(module, input, output)
+        def register_active_bp_module(module, grad_input, grad_output):
+            self._session.add_bp_module(module, grad_input, grad_output)
 
         for module in self.modules():
             if not checker.is_atomic_module(module):
                 continue
 
             # register atomic module
-            module.register_forward_hook(register_active_module)
+            module.register_forward_hook(register_active_fp_module)
+            if trace_bp:
+                module.register_backward_hook(register_active_bp_module)
             if type(module).__name__ == module_type:
                 handler = module.register_forward_hook(hook.module_debug)
                 self._forward_trace_ids.update({module : handler.id})
+
+                if trace_bp:
+                    bp_handler = module.register_backward_hook(hook.module_debug)
+                    self._backward_trace_ids.update({module : bp_handler.id})
