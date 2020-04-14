@@ -302,6 +302,7 @@ class HookModule(nn.Module):
 
     def clear_trace(self):
         self._unregister_forward_hook(self._forward_trace_ids)
+        self._unregister_backward_hook(self._backward_trace_ids)
 
     def register_cleanup_running_modules(self):
         r"""

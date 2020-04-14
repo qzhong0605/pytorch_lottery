@@ -117,7 +117,7 @@ def clear_breakpoint(session_id):
     if session is None:
         print(f"""session ${session_id} doesn't exist""")
         return
-    hook_module = session_id.get_hook_module()
+    hook_module = session.get_hook_module()
     hook_module.clear_trace()
 
 
