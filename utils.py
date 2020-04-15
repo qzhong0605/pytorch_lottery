@@ -74,15 +74,21 @@ def backtrace_modules(session_id):
         else:
             print(f"""[bp - {2*session.number_of_fp_modules() - idx - 1}] module {idx}: {running_module[0]}""")
 
-        if type(running_module[1][0]) == tuple:
+        if type(running_module[1]) == tuple:
             input_tensor = '\tInput:'
-            for __input__ in running_module[1][0]:
+            for __input__ in running_module[1]:
                 input_tensor += f'\t{__input__.shape}, {__input__.device.type}'
             print(f'{input_tensor}')
         else:
             print(f"""\tInput: {running_module[1][0].shape}, {running_module[1][0].device.type}""")
 
-        print(f"""\tOutput:\t{running_module[2][0].shape}, {running_module[2][0].device.type}""")
+        if type(running_module[2]) == tuple:
+            output_tensor = '\tOutput:'
+            for __output__ in running_module[2]:
+                output_tensor += f'\t{__output__.shape}, {__output__.device.type}'
+            print(f'{output_tensor}')
+        else:
+            print(f"""\tOutput:\t{running_module[2].shape}, {running_module[2].device.type}""")
 
 
 def retrieve_module(session_id, module_id):
@@ -97,7 +103,7 @@ def retrieve_module(session_id, module_id):
     return running_module
 
 
-def breakpoint_on_module(session_id, module_type):
+def breakpoint_on_module(session_id, module_type, trace_bp=False):
     r"""
     set breakpoint on all the submodule with type of `module_type` for current network
     """
@@ -106,7 +112,7 @@ def breakpoint_on_module(session_id, module_type):
         print(f"""session ${session_id} doesn't exist""")
         return
     hook_module = session.get_hook_module()
-    hook_module.trace_module(module_type)
+    hook_module.trace_module(module_type, trace_bp)
 
 
 def clear_breakpoint(session_id):
@@ -119,6 +125,24 @@ def clear_breakpoint(session_id):
         return
     hook_module = session.get_hook_module()
     hook_module.clear_trace()
+
+
+################################################################################
+#
+# tensor-related functions
+#
+################################################################################
+def count_zeros(t:torch.Tensor):
+    EPS = 1e-6
+    t_cpu = t.cpu()
+    _temp = torch.where(t_cpu.abs() < EPS, torch.ones_like(t_cpu), torch.zeros_like(t_cpu))
+    return _temp.sum().item()
+
+def percentile(t:torch.Tensor, q:float):
+    """return the `q`-th percentile of the abs function on input tensor"""
+    k = 1 + round(float(q) * (t.numel() - 1))
+    result = t.view(-1).abs().kthvalue(k).values.item()
+    return result
 
 
 ################################################################################
