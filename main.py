@@ -107,11 +107,6 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
                 if interval == cur_iter:
                     pruning_rate = setup['PRUNING']['COMPRESSION_RATE'][iter_idx]
                     model.pruning_network(pruning_rate)
-
-                    # update the optimizer
-                    optimizer = optim.SGD(model.parameters(), lr=setup['SOLVER']['LR'],
-                                          weight_decay=setup['SOLVER']['WEIGHT_DECAY'],
-                                          momentum=setup['SOLVER']['MOMENTUM'])
                     break
                 iter_idx += 1
 
@@ -201,6 +196,8 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
             'acc' : avg_acc.avg
         }
         if 'PRUNING' in setup:
+            # keep the mask of weights
+            state.update({'mask' : model.get_weight_mask})
             torch.save(state, f'checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt')
             print(f'============ save model as checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt ======================')
         else:

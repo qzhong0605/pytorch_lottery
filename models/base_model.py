@@ -55,6 +55,13 @@ class HookModule(nn.Module):
         self._pruning_op = None  # how to pruning network
         self._check_point = None   # where to hold the state of network
 
+    def get_weight_mask(self):
+        """return a dict mapping weight name to mask"""
+        ret_weight_mask = OrderedDict()
+        for _, mask_info in self._weight_mask.items():
+            ret_weight_mask.update({mask_info[1] : mask_info[0]})
+        return ret_weight_mask
+
     def init_pruning_configure(self, **kwargs):
         if 'init' in kwargs:
             self._pruning_init = kwargs['init']
@@ -68,6 +75,17 @@ class HookModule(nn.Module):
     def init_pruning_context(self, **kwargs):
         self.init_pruning_configure(**kwargs)
         self.init_weight_mask()
+
+        # register an hook to update the weight with mask before network
+        # forward
+        def model_update_hook(module, input):
+            self.update_weight_with_mask()
+        self.register_forward_pre_hook(model_update_hook)
+
+    def update_weight_with_mask(self):
+        for name, param in self.named_parameters():
+            if 'weight' in name:
+                param.data = param.data * self._weight_mask[id(param)][0].to(self._device)
 
     def reinitialize(self):
         """re-initialize the weights of networks after pruning"""
