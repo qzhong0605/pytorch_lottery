@@ -10,4 +10,7 @@ __model__ = {
     'resnet18' : resnet_cifar100.build_resnet18,
 
     'densenet121' : densenet_cifar100.build_densenet121,
+    'densenet169' : densenet_cifar100.build_densenet169,
+    'densenet201' : densenet_cifar100.build_densenet201,
+    'densenet161' : densenet_cifar100.build_densenet169,
 }
