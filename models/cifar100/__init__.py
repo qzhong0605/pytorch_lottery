@@ -3,6 +3,7 @@ from models.cifar100 import resnet as resnet_cifar100
 from models.cifar100 import densenet as densenet_cifar100
 from models.cifar100 import mobilenetv2 as mobilenetv2_cifar100
 from models.cifar100 import efficientnet as efficientnet_cifar100
+from models.cifar100 import shufflenet as shufflenet_cifar100
 
 # a list of models for cifar100 dataset
 __model__ = {
@@ -16,4 +17,7 @@ __model__ = {
     'densenet161' : densenet_cifar100.build_densenet169,
 
     'efficientnetb0': efficientnet_cifar100.build_efficientnetb0,
+
+    'shufflenetg2' : shufflenet_cifar100.build_shufflenetg2,
+    'shufflenetg3' : shufflenet_cifar100.build_shufflenetg3,
 }
