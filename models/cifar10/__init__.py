@@ -4,6 +4,7 @@ from models.cifar10 import mobilenetv2
 from models.cifar10 import densenet
 from models.cifar10 import efficientnet
 from models.cifar10 import regnet
+from models.cifar10 import shufflenet
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -15,6 +16,9 @@ __model__ = {
 
     'mobilenet' : mobilenet.build_mobilenet,
     'mobilenetv2' : mobilenetv2.build_mobilenetv2,
+
+    'shufflenetg2': shufflenet.build_shufflenetg2,
+    'shufflenetg3': shufflenet.build_shufflenetg3,
 
     'densenet121': densenet.build_densenet121,
     'densenet161': densenet.build_densenet161,
