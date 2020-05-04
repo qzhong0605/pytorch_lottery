@@ -197,7 +197,7 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
         }
         if 'PRUNING' in setup:
             # keep the mask of weights
-            state.update({'mask' : model.get_weight_mask})
+            state.update({'mask' : model.get_weight_mask()})
             torch.save(state, f'checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt')
             print(f'============ save model as checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt ======================')
         else:
