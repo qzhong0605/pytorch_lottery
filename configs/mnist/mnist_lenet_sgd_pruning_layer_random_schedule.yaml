@@ -1,14 +1,14 @@
 # pruing schedule is used to indicate when performing model compression 
 # and the pruning rate
 PRUNING: 
-    ITERATION: [10, 400, 100]
-    COMPRESSION_RATE: [0.5, 0.6, 0.7]
+    ITERATION: [90]
+    COMPRESSION_RATE: [0.5]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'random'
-    # if initializing with random, which kind is used. including kaiming and xavier 
-    INIT_KIND: 'kaiming'
     # which kind of pruning, layer or global 
     OPERATION: 'layer' 
+    # if initializing with random, which kind is used. including kaiming and xavier
+    INIT_KIND: 'kaiming'
     # where to store the last state when pruing network
     DIR: '.running'
 
@@ -16,7 +16,7 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 2 
+    ID: 1
 
 # input dataset
 DATASET:
@@ -35,10 +35,11 @@ MODEL: 'lenet'
 # hyper-paramters for training model
 SOLVER:
     LR: 0.01
-    GAMMA: 0.7
-    OPTIMIZER: 'adam'     # which kind of optimizer method
+    GAMMA: 0.1
+    OPTIMIZER: 'sgd'     # which kind of optimizer method
     STEP_SIZE: 1   # it can be an along number or a list of number
     WEIGHT_DECAY: 0.001
+    MOMENTUM: 0.9
     # the total number of iterations
     TOTAL_EPOCHES: 20 
     # checkpoint-related parameter 
