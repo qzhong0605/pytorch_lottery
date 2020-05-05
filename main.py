@@ -179,16 +179,21 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
 
     file_handler.write(f'Test {epoch}, {losses.avg}, {avg_acc.avg}\n')
 
+
     # save checkpoint
+    checkpoint_dir = None
     if avg_acc.avg > best_acc:
         dataset = setup['DATASET']['NAME']
         model_name = setup['MODEL']
         if 'PRUNING' in setup:
-            if not os.path.exists(f'checkpoint/{dataset}/{model_name}_pruning'):
-                os.makedirs(f'checkpoint/{dataset}/{model_name}_pruning')
+            init_kind = setup['PRUNING']['INIT_TYPE']
+            checkpoint_dir = "checkpoint/{}/{}_pruning_{}_{}".format(
+                dataset, model_name, init_kind, setup['PRUNING']['OPERATION']
+            )
         else:
-            if not os.path.exists(f'checkpoint/{dataset}/{model_name}'):
-                os.makedirs(f'checkpoint/{dataset}/{model_name}')
+            checkpoint_dir = "checkpoint/{}/{}".format(dataset, model_name)
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
 
         state = {
             'epoch' : epoch,
@@ -198,11 +203,8 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
         if 'PRUNING' in setup:
             # keep the mask of weights
             state.update({'mask' : model.get_weight_mask()})
-            torch.save(state, f'checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt')
-            print(f'============ save model as checkpoint/{dataset}/{model_name}_pruning/ckpt_{epoch}.pt ======================')
-        else:
-            torch.save(state, f'checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt')
-            print(f'============ save model as checkpoint/{dataset}/{model_name}/ckpt_{epoch}.pt ======================')
+        torch.save(state, f'{checkpoint_dir}/ckpt_{epoch}.pt')
+        print(f'============ save model as {checkpoint_dir}/ckpt_{epoch}.pt ======================')
         # update global accuracy
         best_acc = avg_acc.avg
 
@@ -344,11 +346,15 @@ def main(args):
         scheduler = MultiStepLR(optimizer, milestones=setup['SOLVER']['STEP_SIZE'],
                                 gamma=setup['SOLVER']['GAMMA'])
 
+    init_type = setup['PRUNING']['INIT_TYPE']
     # write experiments to log
     if 'PRUNING' in setup:
-        if not os.path.exists(f'experiments/{dataset}/{model_name}_pruning'):
-            os.makedirs(f'experiments/{dataset}/{model_name}_pruning')
-        log_handler = open(f'experiments/{dataset}/{model_name}_pruning/{time.time()}.log', 'w')
+        pruning_dir = "experiments/{}/{}_pruning_{}_{}".format(
+            dataset, model_name, init_type, setup['PRUNING']['OPERATION']
+        )
+        if not os.path.exists(pruning_dir):
+            os.makedirs(pruning_dir)
+        log_handler = open(f'{pruning_dir}/{time.time()}.log', 'w')
     else:
         if not os.path.exists(f'experiments/{dataset}/{model_name}'):
             os.makedirs(f'experiments/{dataset}/{model_name}')
@@ -359,7 +365,9 @@ def main(args):
         model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
                                    init_kind=setup['PRUNING']['INIT_KIND'],
                                    op=setup['PRUNING']['OPERATION'],
-                                   check_point='{}/{}/{}.pruning'.format(HERE, setup['PRUNING']['DIR'], setup['MODEL']))
+                                   check_point='{}/{}/{}_{}.pruning'.format(
+                                       HERE, setup['PRUNING']['DIR'], setup['MODEL'], init_type
+                                   ))
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 

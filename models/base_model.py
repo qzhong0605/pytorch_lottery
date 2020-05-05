@@ -75,7 +75,8 @@ class HookModule(nn.Module):
     def init_pruning_context(self, **kwargs):
         self.init_pruning_configure(**kwargs)
         self.init_weight_mask()
-
+        # save the initialized state of network
+        torch.save(self.state_dict(), self._check_point)
         # register an hook to update the weight with mask before network
         # forward
         def model_update_hook(module, input):
@@ -91,7 +92,7 @@ class HookModule(nn.Module):
         """re-initialize the weights of networks after pruning"""
         if self._pruning_init == 'random':
             self._random_init()
-        elif self._pruning_init == 'checkpoint':
+        elif self._pruning_init == 'last':
             self._last_state_init()
         elif self._pruning_init == 'same':
             # keep the remaining weights to be same with the last
