@@ -346,11 +346,10 @@ def main(args):
         scheduler = MultiStepLR(optimizer, milestones=setup['SOLVER']['STEP_SIZE'],
                                 gamma=setup['SOLVER']['GAMMA'])
 
-    init_type = setup['PRUNING']['INIT_TYPE']
     # write experiments to log
     if 'PRUNING' in setup:
         pruning_dir = "experiments/{}/{}_pruning_{}_{}".format(
-            dataset, model_name, init_type, setup['PRUNING']['OPERATION']
+            dataset, model_name, setup['PRUNING']['INIT_TYPE'], setup['PRUNING']['OPERATION']
         )
         if not os.path.exists(pruning_dir):
             os.makedirs(pruning_dir)
@@ -366,7 +365,7 @@ def main(args):
                                    init_kind=setup['PRUNING']['INIT_KIND'],
                                    op=setup['PRUNING']['OPERATION'],
                                    check_point='{}/{}/{}_{}.pruning'.format(
-                                       HERE, setup['PRUNING']['DIR'], setup['MODEL'], init_type
+                                       HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE']
                                    ))
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
