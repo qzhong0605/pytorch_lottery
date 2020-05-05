@@ -190,6 +190,8 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
             checkpoint_dir = "checkpoint/{}/{}_pruning_{}_{}".format(
                 dataset, model_name, init_kind, setup['PRUNING']['OPERATION']
             )
+            for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
+                checkpoint_dir += "_{}".format(pruning_rate)
         else:
             checkpoint_dir = "checkpoint/{}/{}".format(dataset, model_name)
         if not os.path.exists(checkpoint_dir):
@@ -351,6 +353,9 @@ def main(args):
         pruning_dir = "experiments/{}/{}_pruning_{}_{}".format(
             dataset, model_name, setup['PRUNING']['INIT_TYPE'], setup['PRUNING']['OPERATION']
         )
+        for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
+            pruning_dir += "_{}".format(pruning_rate)
+
         if not os.path.exists(pruning_dir):
             os.makedirs(pruning_dir)
         log_handler = open(f'{pruning_dir}/{time.time()}.log', 'w')
