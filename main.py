@@ -130,7 +130,8 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
         end = time.time()
         if batch_idx % args.log_interval == 0:
             progress.display(batch_idx)
-            file_handler.write(f'{epoch},{batch_idx},{losses.avg},{avg_acc.val}, {avg_acc.avg}, {batch_time.avg}\n')
+            lr = optimizer.param_groups[0]['lr']
+            file_handler.write(f'{epoch},{batch_idx},{lr}, {losses.avg},{avg_acc.val}, {avg_acc.avg}, {batch_time.avg}\n')
 
             # update the start time
             end = time.time()
@@ -381,7 +382,7 @@ def main(args):
     # do the initialization for network pruning
     if 'PRUNING' in setup:
         model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
-                                   init_kind=setup['PRUNING']['INIT_KIND'],
+                                   init_kind=setup['PRUNING']['INIT_KIND'] if 'INIT_KIND' in setup['PRUNING'] else None,
                                    op=setup['PRUNING']['OPERATION'],
                                    check_point='{}/{}/{}_{}.pruning'.format(
                                        HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE']

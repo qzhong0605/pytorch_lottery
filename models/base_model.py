@@ -71,6 +71,9 @@ class HookModule(nn.Module):
             self._pruning_op = kwargs['op']
         if 'check_point' in kwargs:
             self._check_point = kwargs['check_point']
+            if os.path.exists(self._check_point):
+                print('remove the existing file: {}'.format(self._check_point))
+                os.remove(self._check_point)
 
     def init_pruning_context(self, **kwargs):
         self.init_pruning_configure(**kwargs)
