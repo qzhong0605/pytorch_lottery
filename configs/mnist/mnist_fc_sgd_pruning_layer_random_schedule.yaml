@@ -2,7 +2,7 @@
 # and the pruning rate
 PRUNING: 
     ITERATION: [90]
-    COMPRESSION_RATE: [0.9]
+    COMPRESSION_RATE: [0.98]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'random'
     # which kind of pruning, layer or global 
@@ -30,14 +30,14 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'lenet'
+MODEL: 'fc'
 
 # hyper-paramters for training model
 SOLVER:
     LR: 0.01
     GAMMA: 0.1
     OPTIMIZER: 'sgd'     # which kind of optimizer method
-    STEP_SIZE: 10   # it can be an along number or a list of number
+    STEP_SIZE: 20   # it can be an along number or a list of number
     WEIGHT_DECAY: 0.001
     MOMENTUM: 0.9
     # the total number of iterations
