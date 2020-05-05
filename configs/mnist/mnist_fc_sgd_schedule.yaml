@@ -21,11 +21,12 @@ MODEL: 'fc'
 # hyper-paramters for training model
 SOLVER:
     LR: 0.01
-    GAMMA: 0.7
-    OPTIMIZER: 'adam'    # which kind of optimizer method
+    GAMMA: 0.1
+    OPTIMIZER: 'sgd'    # which kind of optimizer method
+    MOMENTUM: 0.9
     WEIGHT_DECAY: 0.0001
-    STEP_SIZE: 1   # it can be an along number or a list of number
+    STEP_SIZE: 10   # it can be an along number or a list of number
     # the total number of iterations
-    TOTAL_EPOCHES: 20 
+    TOTAL_EPOCHES: 100 
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
