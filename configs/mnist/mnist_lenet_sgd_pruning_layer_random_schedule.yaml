@@ -16,7 +16,7 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 1
+    ID: 2
 
 # input dataset
 DATASET:
@@ -41,6 +41,6 @@ SOLVER:
     WEIGHT_DECAY: 0.001
     MOMENTUM: 0.9
     # the total number of iterations
-    TOTAL_EPOCHES: 20 
+    TOTAL_EPOCHES: 100 
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
