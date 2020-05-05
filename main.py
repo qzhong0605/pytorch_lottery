@@ -192,6 +192,13 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
             )
             for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
                 checkpoint_dir += "_{}".format(pruning_rate)
+            # add step size information
+            checkpoint_dir += "_lrstep"
+            if type(setup['SOLVER']['STEP_SIZE']) == int:
+                checkpoint_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
+            else:
+                for step_size in setup['SOLVER']['STEP_SIZE']:
+                    checkpoint_dir += "_{}".format(step_size)
         else:
             checkpoint_dir = "checkpoint/{}/{}".format(dataset, model_name)
         if not os.path.exists(checkpoint_dir):
@@ -355,6 +362,13 @@ def main(args):
         )
         for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
             pruning_dir += "_{}".format(pruning_rate)
+
+        pruning_dir += "_lrstep";
+        if type(setup['SOLVER']['STEP_SIZE']) == int:
+            pruning_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
+        else:
+            for step_size in setup['SOLVER']['STEP_SIZE']:
+                pruning_dir += "_{}".format(step_size)
 
         if not os.path.exists(pruning_dir):
             os.makedirs(pruning_dir)
