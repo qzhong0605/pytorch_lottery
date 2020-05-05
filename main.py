@@ -87,7 +87,7 @@ def train(args, model, device, train_loader, optimizer, epoch, file_handler, set
     progress = ProgressMeter(
         len(train_loader),
         [batch_time, data_time, losses, avg_acc],
-        prefix="Epoch: [{}]".format(epoch))
+        prefix="LR:{}    Epoch: [{}]".format(optimizer.param_groups[0]['lr'], epoch))
 
     # switch to train mode
     model.train()
