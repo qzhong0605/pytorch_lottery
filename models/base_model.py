@@ -112,12 +112,16 @@ class HookModule(nn.Module):
         """
         for name, param in self.named_parameters():
             if 'weight' in name:
-                if self._pruning_init_kind == 'kaiming':
-                    nn.init.kaiming_uniform_(param.data, a=math.sqrt(5))
-                elif self._pruning_init_kind == 'xavier':
-                    nn.init.xavier_normal_(param.data)
+                if param.dim() == 1:
+                    # init to one for batchnorm module
+                    nn.init.ones_(param.data)
                 else:
-                    raise NotImplementedError('not support {} initialization'.format(self._pruning_init_kind))
+                    if self._pruning_init_kind == 'kaiming':
+                        nn.init.kaiming_uniform_(param.data, a=math.sqrt(5))
+                    elif self._pruning_init_kind == 'xavier':
+                        nn.init.xavier_normal_(param.data)
+                    else:
+                        raise NotImplementedError('not support {} initialization'.format(self._pruning_init_kind))
                 # update the parameter data with mask
                 weight_mask = self._weight_mask[id(param)][0]
                 param.data = param.data * weight_mask.to(self._device)

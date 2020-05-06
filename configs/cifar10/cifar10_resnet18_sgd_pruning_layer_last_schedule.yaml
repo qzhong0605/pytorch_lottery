@@ -1,0 +1,46 @@
+# pruing schedule is used to indicate when performing model compression
+# # and the pruning rate
+PRUNING:
+    ITERATION: [8000]
+    COMPRESSION_RATE: [0.5]
+    # after performing mask, how to initialize the remaining weights of network
+    INIT_TYPE: 'last'
+    # which kind of pruning, layer or global
+    OPERATION: 'layer'
+    # if initializing with random, which kind is used. including kaiming and xavier
+    INIT_KIND: 'kaiming'
+    # where to store the last state when pruing network
+    DIR: '.running'
+
+# where to run the model, including cuda and cpu
+# If the type is cpu, the ids for device don't have any meanings
+DEVICE:
+    TYPE: 'cuda'
+    ID: 1
+
+# input dataset
+DATASET:
+    NAME: 'cifar10'
+    # where to hold the dataset. If not exists, it would download to here.
+    DIR: 'data'
+    # mean and standard deviation for data preprocessing 
+    MEAN: [0.4914, 0.4822, 0.4465]
+    DEVIATION: [0.2023, 0.1994, 0.2010]
+    TRAIN_BATCHSIZE: 128 
+    EVAL_BATCHSIZE: 64
+
+# model architecture name
+MODEL: 'resnet18'
+
+# hyper-paramters for training model
+SOLVER:
+    LR: 0.1
+    GAMMA: 0.1
+    OPTIMIZER: 'sgd'
+    WEIGHT_DECAY: 0.0005
+    STEP_SIZE: [100, 150] 
+    # the total number of iterations
+    TOTAL_EPOCHES: 200 
+    MOMENTUM: 0.9
+    # checkpoint-related parameter 
+    CHECKPINT:  'checkpoint'
