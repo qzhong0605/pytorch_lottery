@@ -91,10 +91,10 @@ class HookModule(nn.Module):
             if 'weight' in name:
                 param.data = param.data * self._weight_mask[id(param)][0].to(self._device)
 
-    def reinitialize(self):
+    def reinitialize(self, bn=False):
         """re-initialize the weights of networks after pruning"""
         if self._pruning_init == 'random':
-            self._random_init()
+            self._random_init(bn)
         elif self._pruning_init == 'last':
             self._last_state_init()
         elif self._pruning_init == 'same':
@@ -103,7 +103,7 @@ class HookModule(nn.Module):
         else:
             raise NotImplementedError(f'{self._pruning_init} initialization not support yet')
 
-    def _random_init(self, method='kaiming'):
+    def _random_init(self, method='kaiming', bn=False):
         r""" after pruning network, there is a need to initialize the weight of
         the network. Here, the weights are initialized by the normal method for
         neural networks
@@ -115,7 +115,7 @@ class HookModule(nn.Module):
                 if param.dim() == 1:
                     # init to one for batchnorm module
                     nn.init.ones_(param.data)
-                else:
+                elif not bn:
                     if self._pruning_init_kind == 'kaiming':
                         nn.init.kaiming_uniform_(param.data, a=math.sqrt(5))
                     elif self._pruning_init_kind == 'xavier':
@@ -166,18 +166,37 @@ class HookModule(nn.Module):
         self.load_state_dict(state)
 
     def pruning_network(self, q:float):
-        r""" choose one pruning method to compact the network, including `layer`
-        and global.
+        r""" choose one pruning method to compact the network, including `layer`,
+        global and bn
         """
         if self._pruning_op == 'layer':
             self.pruning_with_percentile(q)
         elif self._pruning_op == 'global':
             self.global_pruning(q)
+        elif self._pruning_op == 'bn':
+            self.pruning_with_bn(q)
         else:
             raise NotImplementedError("pruning {} method doesn't be supported")
 
         # now reinitialize the weights of network
         self.reinitialize()
+
+    def pruning_with_bn(self, q:float):
+        r""" perform pruing only on batchnorm operation. It can be converted to
+        structured network pruning
+        """
+        if len(self._weight_mask) == 0:
+            return
+        for name, param in self.named_parameters():
+            if 'weight' in name and param.dim() == 1:
+                # it's weights from batchnorm module
+                cpu_param = param.cpu()
+                old_mask = self._weight_mask[id(param)][0]
+                percentile_value = percentile(tensor_nonzero(cpu_param), q)
+                new_mask = torch.where(cpu_param.abs() < percentile_value,
+                                       torch.zeros_like(old_mask), old_mask)
+                param.data = param.data * new_mask.to(self._device)
+                self._weight_mask.update({id(param) : (new_mask, name)})
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than

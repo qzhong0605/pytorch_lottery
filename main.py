@@ -381,12 +381,22 @@ def main(args):
 
     # do the initialization for network pruning
     if 'PRUNING' in setup:
+        pruning_model = "{}/{}/{}_pruning_{}_{}".format(
+            HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE'],
+            setup['PRUNING']['OPERATION']
+        )
+        pruning_model += "_lrstep";
+        if type(setup['SOLVER']['STEP_SIZE']) == int:
+            pruning_model += "_{}".format(setup['SOLVER']['STEP_SIZE'])
+        else:
+            for step_size in setup['SOLVER']['STEP_SIZE']:
+                pruning_model += "_{}".format(step_size)
+        pruning_model += ".model"
+
         model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
                                    init_kind=setup['PRUNING']['INIT_KIND'] if 'INIT_KIND' in setup['PRUNING'] else None,
                                    op=setup['PRUNING']['OPERATION'],
-                                   check_point='{}/{}/{}_{}.pruning'.format(
-                                       HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE']
-                                   ))
+                                   check_point=pruning_model)
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 
