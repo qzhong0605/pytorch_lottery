@@ -2,7 +2,7 @@
 # and the pruning rate
 PRUNING: 
     ITERATION: [90]
-    COMPRESSION_RATE: [0.9]
+    COMPRESSION_RATE: [0.98]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'last'
     # which kind of pruning, layer, global or bn
