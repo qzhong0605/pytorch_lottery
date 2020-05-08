@@ -191,10 +191,12 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
             checkpoint_dir = "checkpoint/{}/{}_pruning_{}_{}".format(
                 dataset, model_name, init_kind, setup['PRUNING']['OPERATION']
             )
+            for iteration in setup['PRUNING']['ITERATION']:
+                checkpoint_dir += "_{}".format(iteration)
             for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
                 checkpoint_dir += "_{}".format(pruning_rate)
             # add step size information
-            checkpoint_dir += "_lrstep"
+            checkpoint_dir += "_{}_lrstep".format(setup['SOLVER']['LR'])
             if type(setup['SOLVER']['STEP_SIZE']) == int:
                 checkpoint_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
             else:
@@ -361,10 +363,12 @@ def main(args):
         pruning_dir = "experiments/{}/{}_pruning_{}_{}".format(
             dataset, model_name, setup['PRUNING']['INIT_TYPE'], setup['PRUNING']['OPERATION']
         )
+        for iteration in setup['PRUNING']['ITERATION']:
+            pruning_dir += "_{}".format(iteration)
         for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
             pruning_dir += "_{}".format(pruning_rate)
 
-        pruning_dir += "_lrstep";
+        pruning_dir += "_lr_{}_lrstep".format(setup['SOLVER']['LR']);
         if type(setup['SOLVER']['STEP_SIZE']) == int:
             pruning_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
         else:
@@ -385,7 +389,11 @@ def main(args):
             HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE'],
             setup['PRUNING']['OPERATION']
         )
-        pruning_model += "_lrstep";
+        for iteration in setup['PRUNING']['ITERATION']:
+            pruning_dir += "_{}".format(iteration)
+        for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
+            pruning_model += "_{}".format(pruning_rate)
+        pruning_model += "_{}_lrstep".format(setup['SOLVER']['LR']);
         if type(setup['SOLVER']['STEP_SIZE']) == int:
             pruning_model += "_{}".format(setup['SOLVER']['STEP_SIZE'])
         else:

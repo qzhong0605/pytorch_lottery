@@ -96,7 +96,7 @@ class HookModule(nn.Module):
         if self._pruning_init == 'random':
             self._random_init(bn)
         elif self._pruning_init == 'last':
-            self._last_state_init()
+            self._last_state_init(bn)
         elif self._pruning_init == 'same':
             # keep the remaining weights to be same with the last
             pass
@@ -126,18 +126,20 @@ class HookModule(nn.Module):
                 weight_mask = self._weight_mask[id(param)][0]
                 param.data = param.data * weight_mask.to(self._device)
 
-    def _last_state_init(self):
+    def _last_state_init(self, bn=False):
         r""" after pruning network, filling the weights from the last saved
         checkpoint
 
         :param filename: string, a disk state file
         """
-        self.restore_state(self._check_point)
+        model_state = self.restore_state(self._check_point)
         for name, param in self.named_parameters():
             if 'weight' in name:
                 # update the parameter data with mask
+                if bn and param.dim() != 1:
+                    continue
                 weight_mask = self._weight_mask[id(param)][0]
-                param.data = param.data * weight_mask.to(self._device)
+                param.data = model_state[name].to(self._device) * weight_mask.to(self._device)
 
     def init_weight_mask(self):
         for name, param in self.named_parameters():
@@ -162,8 +164,8 @@ class HookModule(nn.Module):
         :param filename: string, representing a disk file containing the state of network
         """
         assert os.path.exists(filename), f'model file {filename} must exist'
-        state = torch.load(filename)
-        self.load_state_dict(state)
+        state = torch.load(filename, map_location=torch.device('cpu'))
+        return state
 
     def pruning_network(self, q:float):
         r""" choose one pruning method to compact the network, including `layer`,
@@ -179,7 +181,7 @@ class HookModule(nn.Module):
             raise NotImplementedError("pruning {} method doesn't be supported")
 
         # now reinitialize the weights of network
-        self.reinitialize()
+        self.reinitialize(True if self._pruning_op == 'bn' else False)
 
     def pruning_with_bn(self, q:float):
         r""" perform pruing only on batchnorm operation. It can be converted to
