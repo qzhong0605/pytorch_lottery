@@ -2,9 +2,9 @@
 # and the pruning rate
 PRUNING: 
     ITERATION: [90]
-    COMPRESSION_RATE: [0.96]
+    COMPRESSION_RATE: [0.92]
     # after performing mask, how to initialize the remaining weights of network
-    INIT_TYPE: 'last'
+    INIT_TYPE: 'same'
     # which kind of pruning, layer or global 
     OPERATION: 'layer' 
     # where to store the last state when pruing network
@@ -14,7 +14,7 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 3
+    ID: 0
 
 # input dataset
 DATASET:
@@ -28,7 +28,7 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'fc'
+MODEL: 'lenetbn'
 
 # hyper-paramters for training model
 SOLVER:
