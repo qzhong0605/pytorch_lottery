@@ -390,7 +390,7 @@ def main(args):
             setup['PRUNING']['OPERATION']
         )
         for iteration in setup['PRUNING']['ITERATION']:
-            pruning_dir += "_{}".format(iteration)
+            pruning_model += "_{}".format(iteration)
         for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
             pruning_model += "_{}".format(pruning_rate)
         pruning_model += "_{}_lrstep".format(setup['SOLVER']['LR']);

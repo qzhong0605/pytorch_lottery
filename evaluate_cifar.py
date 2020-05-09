@@ -107,6 +107,26 @@ def global_percentile_nonzeros(tensors:list, q:float):
     cat_res = torch.cat([tensor.cpu().view(-1) for tensor in tensors])
     return percentile_nonzeros(cat_res, q)
 
+def count_sparsity(model:nn.Module):
+    """return the sparsity of the input model. Here, only the `weight` is computed"""
+    zeros = 0
+    totals = 0
+    for name, param in model.named_parameters():
+        if 'weight' not in name:
+            continue
+        zeros += count_zeros(param)
+        totals += param.numel()
+    return (zeros * 1. / totals)
+
+def count_sparsity_bn(model:nn.Module):
+    """return the sparsity of the input model on all batch norm operations"""
+    zeros = 0
+    totals = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            zeros += count_zeros(param)
+            totals += param.numel()
+    return (zeros * 1. / totals)
 
 ################################################################################
 #

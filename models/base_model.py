@@ -177,6 +177,8 @@ class HookModule(nn.Module):
             self.global_pruning(q)
         elif self._pruning_op == 'bn':
             self.pruning_with_bn(q)
+        elif self._pruning_op == 'bnglobal':
+            self.pruning_with_bn_global(q)
         else:
             raise NotImplementedError("pruning {} method doesn't be supported")
 
@@ -194,7 +196,29 @@ class HookModule(nn.Module):
                 # it's weights from batchnorm module
                 cpu_param = param.cpu()
                 old_mask = self._weight_mask[id(param)][0]
-                percentile_value = percentile(tensor_nonzero(cpu_param), q)
+                percentile_value = percentile(tensor_nonzero(cpu_param * old_mask), q)
+                new_mask = torch.where(cpu_param.abs() < percentile_value,
+                                       torch.zeros_like(old_mask), old_mask)
+                param.data = param.data * new_mask.to(self._device)
+                self._weight_mask.update({id(param) : (new_mask, name)})
+
+    def pruning_with_bn_global(self, q:float):
+        r"""performing global pruning on the batchnorm operation. It's a kind of
+        structurable network pruning
+        """
+        if len(self._weight_mask) == 0:
+            return
+        # caculate the kth value for the weights of batch norm
+        global_bn_weights = torch.cat(
+            [(param.cpu() * self._weight_mask[id(param)][0]).view(-1)
+            for name, param in self.named_parameters()
+            if 'weight' in name and param.dim() == 1]
+        )
+        percentile_value = percentile(tensor_nonzero(global_bn_weights), q)
+        for name, param in self.named_parameters():
+            if 'weight' in name and param.dim() == 1:
+                cpu_param = param.cpu()
+                old_mask = self._weight_mask[id(param)][0]
                 new_mask = torch.where(cpu_param.abs() < percentile_value,
                                        torch.zeros_like(old_mask), old_mask)
                 param.data = param.data * new_mask.to(self._device)
@@ -214,7 +238,7 @@ class HookModule(nn.Module):
                 continue
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)][0]
-            percentile_value = percentile(tensor_nonzero(cpu_param), q)
+            percentile_value = percentile(tensor_nonzero(cpu_param * old_mask), q)
             new_mask = torch.where(cpu_param.abs() < percentile_value,
                                    torch.zeros_like(old_mask), old_mask)
             param.data = param.data * new_mask.to(self._device)
@@ -228,9 +252,11 @@ class HookModule(nn.Module):
         if len(self._weight_mask) == 0:
             return
         # caculate the kth value for all weights of network
-        global_weights = torch.cat([param.abs().view(-1)
-                                    for name, param in self.named_parameters()
-                                    if 'weight' in name])
+        global_weights = torch.cat(
+            [(param.data.cpu() * self._weight_mask[id(param)][0]).view(-1)
+            for name, param in self.named_parameters()
+            if 'weight' in name]
+        )
         percentile_value = percentile(tensor_nonzero(global_weights), q)
 
         for name, param in self.named_parameters():
