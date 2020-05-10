@@ -5,6 +5,7 @@ from models.cifar10 import densenet
 from models.cifar10 import efficientnet
 from models.cifar10 import regnet
 from models.cifar10 import shufflenet
+from models.cifar10 import vgg
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -27,5 +28,10 @@ __model__ = {
 
     'efficientnetb0': efficientnet.build_efficientnetb0,
     'regnetx_200mf': regnet.build_regnetx_200mf,
+
+    'vgg11': vgg.build_vgg11,
+    'vgg13': vgg.build_vgg13,
+    'vgg16': vgg.build_vgg16,
+    'vgg19': vgg.build_vgg19,
 }
 
