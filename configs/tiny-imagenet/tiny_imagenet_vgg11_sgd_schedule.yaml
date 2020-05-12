@@ -1,0 +1,32 @@
+# where to run the model, including cuda and cpu
+# If the type is cpu, the ids for device don't have any meanings
+DEVICE:
+    TYPE: 'cuda'
+    ID: 1
+
+# input dataset
+DATASET:
+    NAME: 'tinyimagenet'
+    # where to hold the dataset. If not exists, it would download to here.
+    DIR: '/mnt/disk1/zhibin/experiment_data/tiny_imagenet/tiny-imagenet-200'
+    # mean and standard deviation for data preprocessing 
+    MEAN: [0.485, 0.456, 0.406]
+    DEVIATION: [0.229, 0.224, 0.225]
+    TRAIN_BATCHSIZE: 128 
+    EVAL_BATCHSIZE: 64
+
+# model architecture name
+MODEL: 'vgg11'
+
+# hyper-paramters for training model
+SOLVER:
+    LR: 0.1
+    GAMMA: 0.1
+    OPTIMIZER: 'sgd'
+    WEIGHT_DECAY: 0.0001
+    STEP_SIZE: [40, 60] 
+    MOMENTUM: 0.9
+    # the total number of iterations
+    TOTAL_EPOCHES: 120
+    # checkpoint-related parameter 
+    CHECKPINT:  'checkpoint'

@@ -251,12 +251,14 @@ def main(args):
     train_loader = None
     test_loader = None
 
+    normalize = transforms.Normalize(mean=setup['DATASET']['MEAN'],
+                                     std=setup['DATASET']['DEVIATION'])
     if dataset == 'mnist':
       train_loader = torch.utils.data.DataLoader(
           datasets.MNIST(setup['DATASET']['DIR'], train=True, download=True,
                          transform=transforms.Compose([
                              transforms.ToTensor(),
-                             transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                             normalize
                          ])),
           batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
       )
@@ -264,7 +266,7 @@ def main(args):
           datasets.MNIST(setup['DATASET']['DIR'], train=False, download=True,
                          transform=transforms.Compose([
                              transforms.ToTensor(),
-                             transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                             normalize
                          ])),
           batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=True, **kwargs
       )
@@ -275,7 +277,7 @@ def main(args):
                                  transforms.RandomCrop(32, padding=4),
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
-                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                                 normalize
                              ])),
             batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
         )
@@ -283,7 +285,7 @@ def main(args):
             datasets.CIFAR10(setup['DATASET']['DIR'], train=False, download=True,
                              transform=transforms.Compose([
                                  transforms.ToTensor(),
-                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                                 normalize
                              ])),
             batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=False, **kwargs
         )
@@ -294,7 +296,7 @@ def main(args):
                                  transforms.RandomCrop(32, padding=4),
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
-                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                                 normalize
                              ])),
             batch_size=setup['DATASET']['TRAIN_BATCHSIZE'], shuffle=True, **kwargs
         )
@@ -302,28 +304,30 @@ def main(args):
             datasets.CIFAR100(setup['DATASET']['DIR'], train=False, download=True,
                              transform=transforms.Compose([
                                  transforms.ToTensor(),
-                                 transforms.Normalize(setup['DATASET']['MEAN'], setup['DATASET']['DEVIATION'])
+                                 normalize
                              ])),
             batch_size=setup['DATASET']['EVAL_BATCHSIZE'], shuffle=False, **kwargs
         )
-    elif dataset == 'tiny-imagenet':
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                         std=[0.229, 0.224, 0.225])
+    elif dataset == 'tinyimagenet':
         train_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(setup['DATASET']['TRAIN_DIR'],
-                                 transforms.Compose(transforms.RandomResizedCrop(224),
-                                                    transforms.RandomHorizontalFlip(),
-                                                    transforms.ToTensor()),
-                                 normalize),
+            datasets.ImageFolder(os.path.join(setup['DATASET']['DIR'], 'train'),
+                                 transforms.Compose([
+                                     transforms.RandomResizedCrop(224),
+                                     transforms.RandomHorizontalFlip(),
+                                     transforms.ToTensor(),
+                                     normalize
+                                 ])),
             batch_size=setup['DATASET']['TRAIN_BATCHSIZE'],
             shuffle=True, **kwargs
         )
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(setup['DATASET']['VAL_DIR'],
-                                 transforms.Compose(transforms.Resize(256),
-                                                    transforms.CenterCrop(224),
-                                                    transforms.ToTensor(),
-                                                    normalize)),
+            datasets.ImageFolder(os.path.join(setup['DATASET']['DIR'], 'val'),
+                                 transforms.Compose([
+                                     transforms.Resize(256),
+                                     transforms.CenterCrop(224),
+                                     transforms.ToTensor(),
+                                     normalize
+                                 ])),
             batch_size=setup['DATASET']['EVAL_BATCHSIZE'],
             shuffle=False, **kwargs
         )
