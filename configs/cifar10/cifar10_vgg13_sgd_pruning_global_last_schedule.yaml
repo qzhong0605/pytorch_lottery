@@ -1,8 +1,20 @@
+# pruing schedule is used to indicate when performing model compression
+# # and the pruning rate
+PRUNING:
+    ITERATION: [8000]
+    COMPRESSION_RATE: [0.4]
+    # after performing mask, how to initialize the remaining weights of network
+    INIT_TYPE: 'last'
+    # which kind of pruning, layer or global
+    OPERATION: 'global'
+    # where to store the last state when pruing network
+    DIR: '.running'
+
 # where to run the model, including cuda and cpu
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 2
+    ID: 3
 
 # input dataset
 DATASET:
@@ -16,17 +28,17 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'vgg11'
+MODEL: 'vgg13'
 
 # hyper-paramters for training model
 SOLVER:
     LR: 0.1
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
-    WEIGHT_DECAY: 0.0001
-    STEP_SIZE: [80, 120] 
-    MOMENTUM: 0.9
+    WEIGHT_DECAY: 0.0005
+    STEP_SIZE: [60, 90] 
     # the total number of iterations
-    TOTAL_EPOCHES: 160 
+    TOTAL_EPOCHES: 120
+    MOMENTUM: 0.9
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'

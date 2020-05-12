@@ -195,15 +195,16 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
                 checkpoint_dir += "_{}".format(iteration)
             for pruning_rate in setup['PRUNING']['COMPRESSION_RATE']:
                 checkpoint_dir += "_{}".format(pruning_rate)
-            # add step size information
-            checkpoint_dir += "_{}_lrstep".format(setup['SOLVER']['LR'])
-            if type(setup['SOLVER']['STEP_SIZE']) == int:
-                checkpoint_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
-            else:
-                for step_size in setup['SOLVER']['STEP_SIZE']:
-                    checkpoint_dir += "_{}".format(step_size)
         else:
             checkpoint_dir = "checkpoint/{}/{}".format(dataset, model_name)
+        # add step size information
+        checkpoint_dir += "_{}_{}_lrstep".format(setup['SOLVER']['LR'],
+                                                 setup['SOLVER']['TOTAL_EPOCHES'])
+        if type(setup['SOLVER']['STEP_SIZE']) == int:
+            checkpoint_dir += "_{}".format(setup['SOLVER']['STEP_SIZE'])
+        else:
+            for step_size in setup['SOLVER']['STEP_SIZE']:
+                checkpoint_dir += "_{}".format(step_size)
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
 
