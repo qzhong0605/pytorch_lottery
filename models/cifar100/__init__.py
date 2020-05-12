@@ -4,6 +4,7 @@ from models.cifar100 import densenet as densenet_cifar100
 from models.cifar100 import mobilenetv2 as mobilenetv2_cifar100
 from models.cifar100 import efficientnet as efficientnet_cifar100
 from models.cifar100 import shufflenet as shufflenet_cifar100
+from models.cifar100 import vgg as vgg_cifar100
 
 # a list of models for cifar100 dataset
 __model__ = {
@@ -20,4 +21,9 @@ __model__ = {
 
     'shufflenetg2' : shufflenet_cifar100.build_shufflenetg2,
     'shufflenetg3' : shufflenet_cifar100.build_shufflenetg3,
+
+    'vgg11' : vgg_cifar100.build_vgg11,
+    'vgg13' : vgg_cifar100.build_vgg13,
+    'vgg16' : vgg_cifar100.build_vgg16,
+    'vgg19' : vgg_cifar100.build_vgg19,
 }
