@@ -6,6 +6,7 @@ from models.cifar10 import efficientnet
 from models.cifar10 import regnet
 from models.cifar10 import shufflenet
 from models.cifar10 import vgg
+from models.cifar10 import resnext
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -33,5 +34,10 @@ __model__ = {
     'vgg13': vgg.build_vgg13,
     'vgg16': vgg.build_vgg16,
     'vgg19': vgg.build_vgg19,
+
+    'resnext29_2x64d' : resnext.build_resnext29_2x64d,
+    'resnext29_4x64d' : resnext.build_resnext29_4x64d,
+    'resnext29_8x64d' : resnext.build_resnext29_8x64d,
+    'resnext29_32x64d': resnext.build_resnext29_32x4d,
 }
 
