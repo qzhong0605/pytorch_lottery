@@ -2,7 +2,7 @@
 # # and the pruning rate
 PRUNING:
     ITERATION: [8000]
-    COMPRESSION_RATE: [0.6]
+    COMPRESSION_RATE: [0.4]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'last'
     # which kind of pruning, layer or global
@@ -14,7 +14,7 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 3
+    ID: 0
 
 # input dataset
 DATASET:
@@ -28,7 +28,7 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'vgg13'
+MODEL: 'mobilenetv2'
 
 # hyper-paramters for training model
 SOLVER:
@@ -36,9 +36,9 @@ SOLVER:
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
     WEIGHT_DECAY: 0.0005
-    STEP_SIZE: [60, 90] 
+    STEP_SIZE: [80, 120] 
     # the total number of iterations
-    TOTAL_EPOCHES: 120
+    TOTAL_EPOCHES: 160
     MOMENTUM: 0.9
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
