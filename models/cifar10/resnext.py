@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models import base_model
-from pytorch_lottery.lottery_modules import elements
+from lottery_modules import elements
 
 
 class Block(nn.Module):
@@ -88,16 +88,16 @@ class ResNeXt(base_model.HookModule):
 
 def build_resnext29_2x64d(device):
     return ResNeXt(num_blocks=[3,3,3], cardinality=2, bottleneck_width=64,
-                   device, 'resnext29_2x64d').to(device)
+                   device=device, name='resnext29_2x64d').to(device)
 
 def build_resnext29_4x64d(device):
     return ResNeXt(num_blocks=[3,3,3], cardinality=4, bottleneck_width=64,
-                   device, 'resnext29_4x64d').to(device)
+                   device=device, name='resnext29_4x64d').to(device)
 
 def build_resnext29_8x64d(device):
     return ResNeXt(num_blocks=[3,3,3], cardinality=8, bottleneck_width=64,
-                   device, 'resnext29_8x64d').to(device)
+                   device=device, name='resnext29_8x64d').to(device)
 
 def build_resnext29_32x4d(device):
     return ResNeXt(num_blocks=[3,3,3], cardinality=32, bottleneck_width=4,
-                   device, 'resnext29_32x64d').to(device)
+                   device=device, name='resnext29_32x64d').to(device)
