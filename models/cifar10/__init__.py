@@ -7,6 +7,7 @@ from models.cifar10 import regnet
 from models.cifar10 import shufflenet
 from models.cifar10 import vgg
 from models.cifar10 import resnext
+from models.cifar10 import googlenet
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -39,5 +40,7 @@ __model__ = {
     'resnext29_4x64d' : resnext.build_resnext29_4x64d,
     'resnext29_8x64d' : resnext.build_resnext29_8x64d,
     'resnext29_32x64d': resnext.build_resnext29_32x4d,
+
+    'googlenet' : googlenet.build_googlenet,
 }
 
