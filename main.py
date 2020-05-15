@@ -411,8 +411,8 @@ def main(args):
 
     # do the initialization for network pruning
     if 'PRUNING' in setup:
-        pruning_model = "{}/{}/{}_pruning_{}_{}".format(
-            HERE, setup['PRUNING']['DIR'], setup['MODEL'],setup['PRUNING']['INIT_TYPE'],
+        pruning_model = "{}/{}/{}_{}_pruning_{}_{}".format(
+            HERE, setup['PRUNING']['DIR'], dataset, setup['MODEL'],setup['PRUNING']['INIT_TYPE'],
             setup['PRUNING']['OPERATION']
         )
         for iteration in setup['PRUNING']['ITERATION']:
