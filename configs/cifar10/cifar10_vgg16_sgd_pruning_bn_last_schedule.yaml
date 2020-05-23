@@ -1,12 +1,12 @@
 # pruing schedule is used to indicate when performing model compression
 # # and the pruning rate
 PRUNING:
-    ITERATION: [8000]
-    COMPRESSION_RATE: [0.5]
+    ITERATION: [4000, 8000, 12000]
+    COMPRESSION_RATE: [0.4, 0.4, 0.4]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'last'
     # which kind of pruning, layer or global
-    OPERATION: 'global'
+    OPERATION: 'bn'
     # where to store the last state when pruing network
     DIR: '.running'
 
@@ -14,7 +14,7 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 0
+    ID: 3
 
 # input dataset
 DATASET:
@@ -24,11 +24,11 @@ DATASET:
     # mean and standard deviation for data preprocessing 
     MEAN: [0.4914, 0.4822, 0.4465]
     DEVIATION: [0.2023, 0.1994, 0.2010]
-    TRAIN_BATCHSIZE: 64
+    TRAIN_BATCHSIZE: 128
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'resnet18'
+MODEL: 'vgg16'
 
 # hyper-paramters for training model
 SOLVER:

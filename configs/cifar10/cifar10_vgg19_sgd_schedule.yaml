@@ -1,20 +1,8 @@
-# pruing schedule is used to indicate when performing model compression
-# # and the pruning rate
-PRUNING:
-    ITERATION: [8000]
-    COMPRESSION_RATE: [0.5]
-    # after performing mask, how to initialize the remaining weights of network
-    INIT_TYPE: 'last'
-    # which kind of pruning, layer or global
-    OPERATION: 'global'
-    # where to store the last state when pruing network
-    DIR: '.running'
-
 # where to run the model, including cuda and cpu
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 0
+    ID: 3
 
 # input dataset
 DATASET:
@@ -24,21 +12,21 @@ DATASET:
     # mean and standard deviation for data preprocessing 
     MEAN: [0.4914, 0.4822, 0.4465]
     DEVIATION: [0.2023, 0.1994, 0.2010]
-    TRAIN_BATCHSIZE: 64
+    TRAIN_BATCHSIZE: 128 
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'resnet18'
+MODEL: 'vgg19'
 
 # hyper-paramters for training model
 SOLVER:
     LR: 0.1
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
-    WEIGHT_DECAY: 0.0005
-    STEP_SIZE: [60, 90] 
-    # the total number of iterations
-    TOTAL_EPOCHES: 120
+    WEIGHT_DECAY: 0.0001
+    STEP_SIZE: [80, 120] 
     MOMENTUM: 0.9
+    # the total number of iterations
+    TOTAL_EPOCHES: 160 
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'

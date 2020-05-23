@@ -24,9 +24,9 @@ SOLVER:
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
     WEIGHT_DECAY: 0.0005
-    STEP_SIZE: [100, 150] 
+    STEP_SIZE: [80, 120] 
     # the total number of iterations
-    TOTAL_EPOCHES: 200 
+    TOTAL_EPOCHES: 160 
     MOMENTUM: 0.9
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
