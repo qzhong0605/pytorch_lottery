@@ -1,15 +1,3 @@
-# pruing schedule is used to indicate when performing model compression 
-# and the pruning rate
-PRUNING: 
-    ITERATION: [90]
-    COMPRESSION_RATE: [0.85]
-    # after performing mask, how to initialize the remaining weights of network
-    INIT_TYPE: 'last'
-    # which kind of pruning, layer or global 
-    OPERATION: 'global' 
-    # where to store the last state when pruing network
-    DIR: '.running'
-
 # where to run the model, including cuda and cpu
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
@@ -28,17 +16,17 @@ DATASET:
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'lenet'
+MODEL: 'lenetcaffe'
 
 # hyper-paramters for training model
 SOLVER:
     LR: 0.01
     GAMMA: 0.1
     OPTIMIZER: 'sgd'     # which kind of optimizer method
-    STEP_SIZE: 20   # it can be an along number or a list of number
+    STEP_SIZE: 10   # it can be an along number or a list of number
     WEIGHT_DECAY: 0.001
     MOMENTUM: 0.9
     # the total number of iterations
-    TOTAL_EPOCHES: 100
+    TOTAL_EPOCHES: 100 
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'

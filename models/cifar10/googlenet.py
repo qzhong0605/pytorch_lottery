@@ -96,7 +96,6 @@ class GoogLeNet(base_model.HookModule):
         out = self.maxpool(out)
         out = self.a5(out)
         out = self.b5(out)
-        out = self.avgpool(out)
         out = self.classifier(out)
         return out
 

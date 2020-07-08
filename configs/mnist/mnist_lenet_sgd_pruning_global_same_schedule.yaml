@@ -1,8 +1,8 @@
 # pruing schedule is used to indicate when performing model compression 
 # and the pruning rate
 PRUNING: 
-    ITERATION: [90]
-    COMPRESSION_RATE: [0.94]
+    ITERATION: [90, 630, 930]
+    COMPRESSION_RATE: [0.9, 0.8, 0.8]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'same'
     # which kind of pruning, layer or global 

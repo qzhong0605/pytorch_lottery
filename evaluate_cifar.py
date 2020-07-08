@@ -128,6 +128,104 @@ def count_sparsity_bn(model:nn.Module):
             totals += param.numel()
     return (zeros * 1. / totals)
 
+###########################################################################################
+# show the sparsity of network
+###########################################################################################
+def dump_sparsity_conv(model:nn.Module):
+    """dump the sparsity information about the weights of convolution"""
+    for name, param in model.named_parameters():
+        if param.dim() < 4:
+            continue
+        print('{}: {} - {}'.format(name, param.shape, count_zeros(param)*1.0/param.numel()))
+
+def dump_sparsity_bn(model:nn.Module):
+    """dump the sparsity information about the weights of batch normalization"""
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            print('{}: {} - {}'.format(name, param.shape, count_zeros(param)*1.0/param.numel()))
+
+sparsity_bn = []
+def get_sparsity_bn(model:nn.Module):
+    """return the sparsity information about the weights of batch normalization"""
+    global sparsity_bn
+    sparsity_bn.clear()
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            sparsity_bn.append(count_zeros(param)*1.0/param.numel())
+
+def dump_sparsity(model:nn.Module):
+    """dump the sparsity information about the weights of network"""
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            print('{}: {} - {}'.format(name, param.shape, count_zeros(param)*1.0/param.numel()))
+
+################################################################################
+# count the weights of network
+################################################################################
+def count_weights(model:nn.Module):
+    """return the total number of parameters for the input model"""
+    totals = 0
+    for name, param in model.named_parameters():
+        if 'weight' not in name:
+            continue
+        totals += param.numel()
+    return totals
+
+def count_weights_conv(model:nn.Module):
+    """return the total number of parameters in convolution for the input model"""
+    totals = 0
+    for name, param in model.named_parameters():
+        if 'weight' not in name and len(param.shape) != 4:
+            continue
+        totals += param.numel()
+    return totals
+
+def count_weights_bn(model:nn.Module):
+    """return the total number of parameters on BN for the input model"""
+    totals = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            totals += param.numel()
+    return totals
+
+################################################################################
+# conv-related computation
+################################################################################
+conv_idx = 0
+total_removed =0
+def print_conv_kernel(module, input, output):
+    """print the conv information"""
+    global conv_idx
+    global total_removed
+    if isinstance(module, torch.nn.Conv2d):
+        stride = module.kernel_size[0] * module.kernel_size[1]
+        removed = module.out_channels * sparsity_bn[conv_idx] * stride * module.in_channels
+        if module.groups > 1:
+            removed = module.groups * sparsity_bn[conv_idx] * stride
+        total_removed += removed
+
+        print('conv: {} in_channels: {} out_channels: {} group: {} kernel size: {} remove: {}'.format(
+            conv_idx, module.in_channels, module.out_channels, module.groups, module.kernel_size,
+            removed
+        ))
+        conv_idx += 1
+
+def foo(model:nn.Module):
+    childrens = list(model.children())
+    if not childrens:
+        if isinstance(model, torch.nn.Conv2d):
+            model.register_forward_hook(print_conv_kernel)
+    for c in childrens:
+        foo(c)
+
+def print_model_conv(model:nn.Module, input_res, gpu_id=None):
+    global conv_idx
+    conv_idx = 0
+    foo(model)
+    if gpu_id is not None:
+        input = torch.rand(1, 3, input_res, input_res).to(torch.device(gpu_id))
+    out = model(input)
+
 ################################################################################
 #
 # skip torch module, whose input is the same with output tensor

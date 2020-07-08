@@ -49,6 +49,8 @@ class HookModule(nn.Module):
         self._weight_mask = OrderedDict()
         # a map from the weight name to weight id
         self._weight_nameids = OrderedDict()
+        # a weight list to be skipped
+        self._skip = []
 
         # pruing-related configure
         self._pruning_init = None   # how to initialize the weights
@@ -74,6 +76,8 @@ class HookModule(nn.Module):
             if os.path.exists(self._check_point):
                 print('remove the existing file: {}'.format(self._check_point))
                 os.remove(self._check_point)
+        if 'skip' in kwargs and kwargs['skip'] is not None:
+            self._skip.extend(kwargs['skip'])
 
     def init_pruning_context(self, **kwargs):
         self.init_pruning_configure(**kwargs)
@@ -212,11 +216,11 @@ class HookModule(nn.Module):
         global_bn_weights = torch.cat(
             [(param.cpu() * self._weight_mask[id(param)][0]).view(-1)
             for name, param in self.named_parameters()
-            if 'weight' in name and param.dim() == 1]
+            if 'weight' in name and name not in self._skip and param.dim() == 1]
         )
         percentile_value = percentile(tensor_nonzero(global_bn_weights), q)
         for name, param in self.named_parameters():
-            if 'weight' in name and param.dim() == 1:
+            if 'weight' in name and name not in self._skip and param.dim() == 1:
                 cpu_param = param.cpu()
                 old_mask = self._weight_mask[id(param)][0]
                 new_mask = torch.where(cpu_param.abs() < percentile_value,
@@ -255,13 +259,13 @@ class HookModule(nn.Module):
         global_weights = torch.cat(
             [(param.data.cpu() * self._weight_mask[id(param)][0]).view(-1)
             for name, param in self.named_parameters()
-            if 'weight' in name]
+            if 'weight' in name and name not in self._skip]
         )
         percentile_value = percentile(tensor_nonzero(global_weights), q)
 
         for name, param in self.named_parameters():
-            if 'weight' not in name:
-                # skip the other type weights
+            if 'weight' not in name or name in self._skip:
+                # ignore the other type weights and the specified weights
                 continue
             cpu_param = param.cpu()
             old_mask = self._weight_mask[id(param)][0]

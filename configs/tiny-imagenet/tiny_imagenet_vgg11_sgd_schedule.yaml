@@ -20,7 +20,7 @@ MODEL: 'vgg11'
 
 # hyper-paramters for training model
 SOLVER:
-    LR: 0.1
+    LR: 0.05
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
     WEIGHT_DECAY: 0.0001
