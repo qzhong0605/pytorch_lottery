@@ -2,7 +2,7 @@
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 2
+    ID: 3
 
 # input dataset
 DATASET:
@@ -12,11 +12,11 @@ DATASET:
     # mean and standard deviation for data preprocessing 
     MEAN: [0.485, 0.456, 0.406]
     DEVIATION: [0.229, 0.224, 0.225]
-    TRAIN_BATCHSIZE: 32
-    EVAL_BATCHSIZE: 32
+    TRAIN_BATCHSIZE: 128
+    EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'vgg16bn'
+MODEL: 'resnet18'
 
 # hyper-paramters for training model
 SOLVER:
