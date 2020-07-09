@@ -1,4 +1,4 @@
-from models.tinyimagenet import vgg
+from models.imagenet import vgg
 
 # a list of models for tiny imagenet dataset
 
