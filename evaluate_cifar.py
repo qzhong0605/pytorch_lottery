@@ -11,6 +11,7 @@ import torchvision.datasets as datasets
 from torch.nn.parameter import Parameter
 
 import models as model_list
+import hook
 
 parser = argparse.ArgumentParser(description='evaluate models for cifar10/cifar100 dataset')
 parser.add_argument('-a', '--arch', default='resnet18', type=str,
@@ -225,6 +226,41 @@ def print_model_conv(model:nn.Module, input_res, gpu_id=None):
     if gpu_id is not None:
         input = torch.rand(1, 3, input_res, input_res).to(torch.device(gpu_id))
     out = model(input)
+
+################################################################################
+# adjust the weights of network
+################################################################################
+def adjust_weight_to_zero(model:nn.Module, thresh):
+    """If the value < 1e-6, it's set to 0"""
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            mask_value(param, thresh)
+
+
+def _adjust_coresponding_value(src:torch.Tensor, dst:torch.Tensor):
+    """If the value on `src` is zero, set the coresponding value on `dst` to zero"""
+    src_cpu = src.cpu()
+    src_mask = torch.where(src_cpu == 0., torch.zeros(src_cpu.shape),
+                           torch.ones(src_cpu.shape))
+    dst.data = dst.data * src_mask.to(dst.device)
+
+
+def adjust_weight_to_zero_bn(model:nn.Module):
+    """If the value of the scale on batch normalization is zero, then
+    the coresponding value of the bias is also set to zero.
+    """
+    # fill the bn weight map
+    bn_weight = {}
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            bn_weight[name[:-7]] = param
+    # now check the bias for batch normalization
+    for name, param in model.named_parameters():
+        if 'bias' in name:
+            module_name = name[:-5]
+            if module_name in bn_weight:
+                _adjust_coresponding_value(bn_weight[module_name], param)
+
 
 ################################################################################
 #
