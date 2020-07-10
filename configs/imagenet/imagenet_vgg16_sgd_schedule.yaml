@@ -16,7 +16,7 @@ DATASET:
     EVAL_BATCHSIZE: 32
 
 # model architecture name
-MODEL: 'vgg16bn'
+MODEL: 'vgg16'
 
 # hyper-paramters for training model
 SOLVER:

@@ -1,12 +1,17 @@
 # pruing schedule is used to indicate when performing model compression
-# # and the pruning rate
+# and the pruning rate
 PRUNING:
-    ITERATION: [4000, 8000]
-    COMPRESSION_RATE: [0.3, 0.3]
+    ITERATION: [4000, 8000, 12000]
+    COMPRESSION_RATE: [0.5, 0.5, 0.5]
     # after performing mask, how to initialize the remaining weights of network
     INIT_TYPE: 'last'
     # which kind of pruning, layer or global
     OPERATION: 'bnglobal'
+    # optimization level, including O0, O1, O2
+    # For O0 level, we train a network as a standard procedure  
+    # For O1 level, we train a sparse network, pruning the network during training procedure by adding a mask 
+    # For O2 level, we train a sparse network, pruning the network and adjusting the architecture of network
+    OPT: 'O2'
     # where to store the last state when pruing network
     DIR: '.running'
 
@@ -14,21 +19,21 @@ PRUNING:
 # If the type is cpu, the ids for device don't have any meanings
 DEVICE:
     TYPE: 'cuda'
-    ID: 1
+    ID: 2
 
 # input dataset
 DATASET:
-    NAME: 'cifar100'
+    NAME: 'cifar10'
     # where to hold the dataset. If not exists, it would download to here.
     DIR: 'data'
     # mean and standard deviation for data preprocessing 
     MEAN: [0.4914, 0.4822, 0.4465]
     DEVIATION: [0.2023, 0.1994, 0.2010]
-    TRAIN_BATCHSIZE: 128 
+    TRAIN_BATCHSIZE: 128
     EVAL_BATCHSIZE: 64
 
 # model architecture name
-MODEL: 'resnet18'
+MODEL: 'vgg16'
 
 # hyper-paramters for training model
 SOLVER:
@@ -36,9 +41,9 @@ SOLVER:
     GAMMA: 0.1
     OPTIMIZER: 'sgd'
     WEIGHT_DECAY: 0.0005
-    STEP_SIZE: [80, 120] 
+    STEP_SIZE: [60, 90] 
     # the total number of iterations
-    TOTAL_EPOCHES: 160
+    TOTAL_EPOCHES: 120
     MOMENTUM: 0.9
     # checkpoint-related parameter 
     CHECKPINT:  'checkpoint'
