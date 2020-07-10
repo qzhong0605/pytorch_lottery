@@ -262,6 +262,17 @@ def adjust_weight_to_zero_bn(model:nn.Module):
                 _adjust_coresponding_value(bn_weight[module_name], param)
 
 
+def adjust_network_modules(model:nn.Module):
+    """adjust the channels for the input `modle`"""
+    bn_mask = []
+    for name, param in model.named_parameters():
+        if 'weight' in name and param.dim() == 1:
+            mask = torch.where(param.cpu().abs() < 1e-6, torch.zeros(param.shape),
+                               torch.ones(param.shape))
+            bn_mask.append(mask)
+    model.adjust_modules(bn_mask)
+
+
 ################################################################################
 #
 # skip torch module, whose input is the same with output tensor

@@ -197,6 +197,10 @@ def test(args, model, device, test_loader, epoch, file_handler, setup, criterion
                 checkpoint_dir += "_{}".format(pruning_rate)
         else:
             checkpoint_dir = "checkpoint/{}/{}".format(dataset, model_name)
+        # add opt level
+        if 'OPT' in setup['PRUNING']:
+            checkpoint_dir += '_{}'.format(setup['PRUNING']['OPT'])
+
         # add step size information
         checkpoint_dir += "_{}_{}_lrstep".format(setup['SOLVER']['LR'],
                                                  setup['SOLVER']['TOTAL_EPOCHES'])
@@ -401,6 +405,10 @@ def main(args):
             for step_size in setup['SOLVER']['STEP_SIZE']:
                 pruning_dir += "_{}".format(step_size)
 
+        # add pruning opt level
+        if 'OPT' in setup['PRUNING']:
+            pruning_dir += '_{}'.format(setup['PRUNING']['OPT'])
+
         if not os.path.exists(pruning_dir):
             os.makedirs(pruning_dir)
         log_handler = open(f'{pruning_dir}/{time.time()}.log', 'w')
@@ -425,12 +433,16 @@ def main(args):
         else:
             for step_size in setup['SOLVER']['STEP_SIZE']:
                 pruning_model += "_{}".format(step_size)
+        # pruning opt level
+        if 'OPT' in setup['PRUNING']:
+            pruning_model += '_{}'.format(setup['PRUNING']['OPT'])
         pruning_model += ".model"
 
         model.init_pruning_context(init=setup['PRUNING']['INIT_TYPE'],
                                    init_kind=setup['PRUNING']['INIT_KIND'] if 'INIT_KIND' in setup['PRUNING'] else None,
                                    op=setup['PRUNING']['OPERATION'],
-                                   check_point=pruning_model)
+                                   check_point=pruning_model,
+                                   opt=setup['PRUNING']['OPT'] if 'OPT' in setup['PRUNING'] else 'O0')
     if 'PRUNING' in setup and not os.path.exists('{}/{}'.format(HERE, setup['PRUNING']['DIR'])):
         os.makedirs('{}/{}'.format(HERE, setup['PRUNING']['DIR']))
 

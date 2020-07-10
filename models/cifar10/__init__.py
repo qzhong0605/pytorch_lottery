@@ -8,6 +8,7 @@ from models.cifar10 import shufflenet
 from models.cifar10 import vgg
 from models.cifar10 import resnext
 from models.cifar10 import googlenet
+from models.cifar10 import vgg_m
 
 # a list models for cifar10 dataset
 __model__ = {
@@ -35,6 +36,11 @@ __model__ = {
     'vgg13': vgg.build_vgg13,
     'vgg16': vgg.build_vgg16,
     'vgg19': vgg.build_vgg19,
+
+    'vgg11m': vgg_m.build_vgg11m,
+    'vgg13m': vgg_m.build_vgg13m,
+    'vgg16m': vgg_m.build_vgg16m,
+    'vgg19m': vgg_m.build_vgg19m,
 
     'resnext29_2x64d' : resnext.build_resnext29_2x64d,
     'resnext29_4x64d' : resnext.build_resnext29_4x64d,

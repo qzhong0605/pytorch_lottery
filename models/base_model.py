@@ -56,6 +56,7 @@ class HookModule(nn.Module):
         self._pruning_init = None   # how to initialize the weights
         self._pruning_op = None  # how to pruning network
         self._check_point = None   # where to hold the state of network
+        self._opt = 'O0'   # the default is to train a network as standard
 
     def get_weight_mask(self):
         """return a dict mapping weight name to mask"""
@@ -78,6 +79,9 @@ class HookModule(nn.Module):
                 os.remove(self._check_point)
         if 'skip' in kwargs and kwargs['skip'] is not None:
             self._skip.extend(kwargs['skip'])
+
+        if 'opt' in kwargs:
+            self._opt = kwargs['opt']
 
     def init_pruning_context(self, **kwargs):
         self.init_pruning_configure(**kwargs)
@@ -187,7 +191,8 @@ class HookModule(nn.Module):
             raise NotImplementedError("pruning {} method doesn't be supported")
 
         # now reinitialize the weights of network
-        self.reinitialize(True if self._pruning_op == 'bn' else False)
+        if self._opt == 'O1':
+            self.reinitialize(True if self._pruning_op == 'bn' else False)
 
     def pruning_with_bn(self, q:float):
         r""" perform pruing only on batchnorm operation. It can be converted to
@@ -219,14 +224,33 @@ class HookModule(nn.Module):
             if 'weight' in name and name not in self._skip and param.dim() == 1]
         )
         percentile_value = percentile(tensor_nonzero(global_bn_weights), q)
-        for name, param in self.named_parameters():
-            if 'weight' in name and name not in self._skip and param.dim() == 1:
-                cpu_param = param.cpu()
-                old_mask = self._weight_mask[id(param)][0]
-                new_mask = torch.where(cpu_param.abs() < percentile_value,
-                                       torch.zeros_like(old_mask), old_mask)
-                param.data = param.data * new_mask.to(self._device)
-                self._weight_mask.update({id(param) : (new_mask, name)})
+
+        if self._opt == 'O1':
+           for name, param in self.named_parameters():
+               if 'weight' in name and name not in self._skip and param.dim() == 1:
+                   cpu_param = param.cpu()
+                   old_mask = self._weight_mask[id(param)][0]
+                   new_mask = torch.where(cpu_param.abs() < percentile_value,
+                                          torch.zeros_like(old_mask), old_mask)
+                   param.data = param.data * new_mask.to(self._device)
+                   self._weight_mask.update({id(param) : (new_mask, name)})
+        elif self._opt == 'O2':
+            bn_mask = []
+            for name, param in self.named_parameters():
+                if 'weight' in name and name not in self._skip and param.dim() == 1:
+                    cpu_param = param.cpu()
+                    new_mask = torch.where(cpu_param.abs() < percentile_value,
+                                           torch.zeros_like(cpu_param),
+                                           torch.ones_like(cpu_param))
+                    bn_mask.append(new_mask)
+
+            # adjust the architecture of network
+            self.load_state_dict(self.restore_state(self._check_point))
+            self.adjust_modules(bn_mask)
+            self.init_weight_mask()
+            # save the last state
+            torch.save(self.state_dict(), self._check_point)
+
 
     def pruning_with_percentile(self, q: float):
         r""" pruning weights with specified percent. If the values are less than
